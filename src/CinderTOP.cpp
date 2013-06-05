@@ -1,5 +1,12 @@
 #include "cinder/Cinder.h"
 #include "cinder/gl/gl.h"
+// #include "cinder/app/AppNative.h"
+#include "cinder/gl/GlslProg.h"
+#include "cinder/gl/Texture.h"
+#include "cinder/Rand.h"
+#include "cinder/params/Params.h"
+#include "cinderfx/Fluid2D.h"
+#include "Particles.h"
 
 #include "TOP_CPlusPlusBase.h"
 
@@ -46,7 +53,7 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	::glColor4f(1, 0, 0, 1);
 	::glMatrixMode(GL_MODELVIEW);
 	::glPushMatrix();
-	::glRotatef(myExecuteCount, 0.0f, 0.0f, 1.0f);
+	::glRotatef(myExecuteCount * 1.0f, 0.0f, 0.0f, 1.0f);
 	::glBegin(GL_QUADS);
 	::glVertex2i(0, 0);
 	::glVertex2i(outputFormat->width / 2, 0);
@@ -57,7 +64,7 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 
 	// Draw a diamond to test anti-aliasing (it will draw over part of the above square)
 	::glPushMatrix();
-	::glRotatef(-myExecuteCount, 0.0f, 0.0f, .150f);
+	::glRotatef(-myExecuteCount * 1.0f, 0.0f, 0.0f, .150f);
 	::glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	::glBegin(GL_QUADS);
 	::glVertex2i(outputFormat->width / 2, 0);
