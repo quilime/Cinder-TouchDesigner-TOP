@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C++ Express 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CinderProject", "CinderProject.vcxproj", "{095FF399-F4A7-43EF-BB02-25E44CE05DF9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CinderTOP", "CinderTOP.vcxproj", "{095FF399-F4A7-43EF-BB02-25E44CE05DF9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -157,7 +157,8 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	::glColor4f(
 		arrays->floatInputs[1].values[0], 
 		arrays->floatInputs[1].values[1], 
-		arrays->floatInputs[1].values[2], 
+		arrays->floatInputs[
+			1].values[2], 
 		arrays->floatInputs[1].values[3]);
 	::glBegin(GL_QUADS);
 	::glVertex2i(outputFormat->width / 2, 0);
