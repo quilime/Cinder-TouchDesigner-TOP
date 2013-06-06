@@ -11,6 +11,8 @@ http://www.geometrictools.com/License/Boost/LICENSE_1_0.txt
 
 #pragma once
 
+
+
 #include <vector>
 //
 #include "cinder/Color.h"
@@ -94,7 +96,7 @@ public:
 	void			append( const Particle& aParticle );
 
 	void			setup( const Rectf& aBounds, Fluid2D* aFluid );
-	void			update( ci::Timer& timer );
+	void			update(ci::Timer* timer );
 	void			draw();
 
 private:

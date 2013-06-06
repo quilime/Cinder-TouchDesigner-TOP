@@ -63,14 +63,14 @@ void ParticleSystem::append( const Particle& aParticle )
 	}
 }
 
-void ParticleSystem::update( Timer& timer )
+void ParticleSystem::update(Timer* timer )
 {
 	// TODO replace 'app' with alternative
-	static float prevTime = (float) timer.getSeconds(); // (float)ci::app::getElapsedSeconds();
-	float curTime = (float) timer.getSeconds(); // (float)ci::app::getElapsedSeconds();
+	static float prevTime = (float) timer->getSeconds(); // (float)ci::app::getElapsedSeconds();
+	float curTime = (float) timer->getSeconds(); // (float)ci::app::getElapsedSeconds();
 	float dt = curTime - prevTime;
 	prevTime = curTime;
-	Rectf bounds = Rectf(0, 0, 500, 500); // ci::app::getWindowBounds();
+	Rectf bounds = mBounds; // ci::app::getWindowBounds();
 
 	float minX = -kBorder;
 	float minY = -kBorder;
@@ -79,8 +79,8 @@ void ParticleSystem::update( Timer& timer )
 
 	// Avoid the borders in the remap because the velocity might be zero.
 	// Nothing interesting happens where velocity is zero.
-	float dx = (float)(mFluid->resX() - 4)/(float)bounds.getWidth();
-	float dy = (float)(mFluid->resY() - 4)/(float)bounds.getHeight();
+	float dx = (float)(mFluid->resX() - 4)/(float) bounds.getWidth();
+	float dy = (float)(mFluid->resY() - 4)/(float) bounds.getHeight();
 	for( int i = 0; i < numParticles(); ++i ) {
 		Particle& part = mParticles.at( i );
 		if( part.pos().x < minX || part.pos().y < minY || part.pos().x >= maxX || part.pos().y >= maxY ) {
@@ -99,6 +99,7 @@ void ParticleSystem::update( Timer& timer )
 void ParticleSystem::draw()
 {
 	/*
+
 	glPointSize( kPointSize );
 	glBegin( GL_POINTS );
 	for( int i = 0; i < numParticles(); ++i ) {
@@ -113,4 +114,5 @@ void ParticleSystem::draw()
 	}
 	glEnd();
 	*/
+
 }

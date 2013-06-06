@@ -23,7 +23,7 @@
 #define __TOP_CPlusPlusBase__
 
 //#include <windows.h>
-#include <cstdio>
+//#include <cstdio>
 
 #define DLLEXPORT __declspec (dllexport)
 

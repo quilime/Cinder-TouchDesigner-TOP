@@ -1,11 +1,14 @@
 #include "cinder/Cinder.h"
+
 #include "cinder/gl/gl.h"
-#include "cinder/app/AppNative.h"
 #include "cinder/gl/GlslProg.h"
 #include "cinder/gl/Texture.h"
+\
 #include "cinder/Rand.h"
 #include "cinder/Timer.h"
+
 #include "cinderfx/Fluid2D.h"
+
 #include "Particles.h"
 
 #include "TOP_CPlusPlusBase.h"
@@ -31,7 +34,14 @@ class CinderTOP : public TOP_CPlusPlusBase {
 		// In this example this value will be incremented each time the execute()
 		// function is called, then passes back to the TOP 
 		int							myExecuteCount;
+
+		float						px;
+		float						py;
+		float						ppx;
+		float						ppy;
+
 		ci::Timer					mTimer;
+
 		float						mVelScale;
 		float						mDenScale;
 		float						mRgbScale;
@@ -95,31 +105,51 @@ CinderTOP::CinderTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	mFluid2D.enableRgb();
 	mFluid2D.enableVorticityConfinement();
 
-	mParticles.setup(Rectf(0, 0, 500, 500), &mFluid2D );
+	mParticles.setup(Rectf(0, 0, 1024, 1024), &mFluid2D );
 }
 CinderTOP::~CinderTOP() {}
 
 
 // DRAW LOOP
 void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_InputArrays* arrays, void* reserved) {
-
+	
+	// update
 	myExecuteCount++;
 
-	// update
+	ppx = px;
+	ppy = py;
+	px = 500  + (sin((float) myExecuteCount * 0.004) * 300);
+	py = 500  + (sin((float) myExecuteCount * 0.02) * 300);
+
+	Colorf color;
+	color.r = Rand::randFloat();
+	color.g = Rand::randFloat();
+	color.b = Rand::randFloat();
+
+	float s = 10;
+	Vec2f prevPos = Vec2f(ppx, ppy);
+	Vec2f pos = Vec2f(px, py);
+	float x = (pos.x / (float) outputFormat->width ) * mFluid2D.resX();
+	float y = (pos.y / (float) outputFormat->height ) * mFluid2D.resY();	
+	Vec2f dv = pos - prevPos;
+	mFluid2D.splatVelocity( x, y, mVelScale * dv );
+	mFluid2D.splatRgb( x, y, mRgbScale * color );
+	if( mFluid2D.isBuoyancyEnabled() ) {
+		mFluid2D.splatDensity( x, y, mDenScale );
+	}
+	for( int i = 0; i < 5; ++i ) {
+		Vec2f partPos = pos + Vec2f( Rand::randFloat( -s, s ), Rand::randFloat( -s, s ) );
+		float life = Rand::randFloat( 3.0f, 6.0f );
+		mParticles.append( Particle( partPos, life, color ) );
+	}
+
 	mFluid2D.step();
-	mParticles.update( mTimer );
+	mParticles.update( &mTimer );
 
-
-	// draw
-
-	// clear out the window with black
-	//gl::clear( Color( 0, 0, 0 ) );
 
 	//gl::color( ColorAf( 1.0f, 1.0f, 1.0f, 0.999f ) );
-	float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
+	//float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
 	//Surface32f surf( data, mFluid2D.resX(), mFluid2D.resY(), mFluid2D.resX()*sizeof(Colorf), SurfaceChannelOrder::RGB );
-	
-
 	//if ( ! mTex ) {
 	//	mTex = gl::Texture( surf );
 	//} else {
@@ -127,13 +157,91 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	//}
 	//gl::draw( mTex, getWindowBounds() );
 	//mTex.unbind();
-	//mParticles.draw();
+	
+	//glColor4f(color.r,color.b,color.g, 1.0);
+	//glPointSize( 10.0 );
+	//glBegin(GL_POINTS);
+ //   glVertex2i(0, 0);
+ //   glVertex2i(400, 400);
+	//glVertex2i(200, 200);
+ //   glEnd();
+
+
+	// draw particles
+	glPointSize( arrays->floatInputs[0].values[0] );
+	glBegin( GL_POINTS );
+	for( int i = 0; i < mParticles.numParticles(); ++i ) {
+		const Particle& part = mParticles.at( i );
+//		if( ! part.alive() )
+//			continue;
+		float alpha = part.age() * part.invLife();
+		alpha = 1.0f; // - std::min( alpha, 1.0f );
+		alpha = std::min( alpha, 0.8f );
+		glColor4f( ColorAf( part.color(), alpha ) );
+		glVertex2f( part.pos() );
+	}
+	glEnd();
+
+
+
+
+
+
 	//mParams.draw();
+
+
+	// draw
+
+
+	// clear out the window with black
+	// glClearColor(0,0,0,0);
+	// glDepthMask( GL_TRUE );
+	// glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+
+
+
+	/*
+	// drawing textures
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0.0, outputFormat->width, 0.0, outputFormat->height, -1.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+
+	glLoadIdentity();
+	glDisable(GL_LIGHTING);
+
+	glColor3f(1,1,1);
+	glEnable(GL_TEXTURE_2D);
+	//glBindTexture(GL_TEXTURE_2D, mark_textures[0].id);
+
+	// Draw a textured quad
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
+	glTexCoord2f(0, 1); glVertex3f(0, 100, 0);
+	glTexCoord2f(1, 1); glVertex3f(100, 100, 0);
+	glTexCoord2f(1, 0); glVertex3f(100, 0, 0);
+	glEnd();
+
+
+	glDisable(GL_TEXTURE_2D);
+	glPopMatrix();
+
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+
+	glMatrixMode(GL_MODELVIEW);
+
+	*/
+
 	
 
 
-	//gl::drawColorCube(Vec3f(0,0,0), Vec3f(30,30,30));
-
+	/*
 	// Lets just draw a small red square in the lower left quadrant of the texture
 	::glColor4f(
 		arrays->floatInputs[0].values[0], 
@@ -157,8 +265,7 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	::glColor4f(
 		arrays->floatInputs[1].values[0], 
 		arrays->floatInputs[1].values[1], 
-		arrays->floatInputs[
-			1].values[2], 
+		arrays->floatInputs[1].values[2], 
 		arrays->floatInputs[1].values[3]);
 	::glBegin(GL_QUADS);
 	::glVertex2i(outputFormat->width / 2, 0);
@@ -167,8 +274,10 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	::glVertex2i(0, outputFormat->height / 2);
 	::glEnd();
 	::glPopMatrix();
-
+	*/
 }
+
+
 
 
 void CinderTOP::getGeneralInfo(TOP_GeneralInfo *ginfo) {
