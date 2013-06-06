@@ -1,14 +1,16 @@
 #include "cinder/Cinder.h"
 #include "cinder/gl/gl.h"
-// #include "cinder/app/AppNative.h"
+#include "cinder/app/AppNative.h"
 #include "cinder/gl/GlslProg.h"
 #include "cinder/gl/Texture.h"
 #include "cinder/Rand.h"
-#include "cinder/params/Params.h"
+#include "cinder/Timer.h"
 #include "cinderfx/Fluid2D.h"
 #include "Particles.h"
 
 #include "TOP_CPlusPlusBase.h"
+
+
 
 class CinderTOP : public TOP_CPlusPlusBase {
 	public:
@@ -26,18 +28,74 @@ class CinderTOP : public TOP_CPlusPlusBase {
 		// The TOP_NodeInfo class store information about the node that's using
 		// this instance of the class (like its name).
 		const TOP_NodeInfo		*myNodeInfo;
-
 		// In this example this value will be incremented each time the execute()
 		// function is called, then passes back to the TOP 
-		int						 myExecuteCount;
+		int							myExecuteCount;
+		ci::Timer					mTimer;
+		float						mVelScale;
+		float						mDenScale;
+		float						mRgbScale;
+		ci::Vec2f					mPrevPos;
+		cinderfx::Fluid2D			mFluid2D;
+		ci::gl::Texture				mTex;
+		ParticleSystem				mParticles;
+		ci::Colorf					mColor;
 };
 
+
 using namespace ci;
+using namespace cinderfx;
 using namespace std;
+
 
 // SETUP
 CinderTOP::CinderTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
+
 	myExecuteCount = 0;
+	mTimer.start();
+
+	mRgbScale = 50;
+	mDenScale = 50;
+	
+	mFluid2D.set( 192, 192 );
+   	mFluid2D.setDensityDissipation( 0.99f );
+	mFluid2D.setRgbDissipation( 0.99f ); 
+	mVelScale = 3.0f*std::max( mFluid2D.resX(), mFluid2D.resY() );
+
+	/*
+	mParams = params::InterfaceGl( "Params", Vec2i( 300, 400 ) );
+	mParams.addParam( "Stam Step", mFluid2D.stamStepAddr() );
+	mParams.addSeparator();
+	mParams.addParam( "Velocity Input Scale", &mVelScale, "min=0 max=10000 step=1" );
+	mParams.addParam( "Density Input Scale", &mDenScale, "min=0 max=1000 step=1" );
+	mParams.addParam( "Rgb Input Scale", &mRgbScale, "min=0 max=1000 step=1" );
+	mParams.addSeparator();
+	mParams.addParam( "Velocity Dissipation", mFluid2D.velocityDissipationAddr(), "min=0.0001 max=1 step=0.0001" );
+	mParams.addParam( "Density Dissipation", mFluid2D.densityDissipationAddr(), "min=0.0001 max=1 step=0.0001" );
+	mParams.addParam( "Rgb Dissipation", mFluid2D.rgbDissipationAddr(), "min=0.0001 max=1 step=0.0001" );   
+	mParams.addSeparator();
+	mParams.addParam( "Velocity Viscosity", mFluid2D.velocityViscosityAddr(), "min=0.000001 max=10 step=0.000001" );
+	mParams.addParam( "Density Viscosity", mFluid2D.densityViscosityAddr(), "min=0.000001 max=10 step=0.000001" );
+	mParams.addParam( "Rgb Viscosity", mFluid2D.rgbViscosityAddr(), "min=0.000001 max=10 step=0.000001" );
+	mParams.addSeparator();
+	mParams.addSeparator();
+	mParams.addParam( "Vorticity Confinement", mFluid2D.enableVorticityConfinementAddr() );
+	mParams.addSeparator();
+	std::vector<std::string> boundaries;
+	boundaries.push_back( "None" ); boundaries.push_back( "Wall" ); boundaries.push_back( "Wrap" );
+	mParams.addParam( "Boundary Type", boundaries, mFluid2D.boundaryTypeAddr() );
+	mParams.addSeparator();
+	mParams.addParam( "Enable Buoyancy", mFluid2D.enableBuoyancyAddr() );
+	mParams.addParam( "Buoyancy Scale", mFluid2D.buoyancyScaleAddr(), "min=0 max=100 step=0.001" );
+	mParams.addParam( "Vorticity Scale", mFluid2D.vorticityScaleAddr(), "min=0 max=1 step=0.001" );
+	*/
+
+	mFluid2D.setDt( 0.1f );
+	mFluid2D.enableDensity();
+	mFluid2D.enableRgb();
+	mFluid2D.enableVorticityConfinement();
+
+	mParticles.setup(Rectf(0, 0, 500, 500), &mFluid2D );
 }
 CinderTOP::~CinderTOP() {}
 
@@ -47,10 +105,41 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 
 	myExecuteCount++;
 
+	// update
+	mFluid2D.step();
+	mParticles.update( mTimer );
+
+
+	// draw
+
+	// clear out the window with black
+	//gl::clear( Color( 0, 0, 0 ) );
+
+	//gl::color( ColorAf( 1.0f, 1.0f, 1.0f, 0.999f ) );
+	float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
+	//Surface32f surf( data, mFluid2D.resX(), mFluid2D.resY(), mFluid2D.resX()*sizeof(Colorf), SurfaceChannelOrder::RGB );
+	
+
+	//if ( ! mTex ) {
+	//	mTex = gl::Texture( surf );
+	//} else {
+	//	mTex.update( surf );
+	//}
+	//gl::draw( mTex, getWindowBounds() );
+	//mTex.unbind();
+	//mParticles.draw();
+	//mParams.draw();
+	
+
+
 	//gl::drawColorCube(Vec3f(0,0,0), Vec3f(30,30,30));
 
 	// Lets just draw a small red square in the lower left quadrant of the texture
-	::glColor4f(1, 0, 0, 1);
+	::glColor4f(
+		arrays->floatInputs[0].values[0], 
+		arrays->floatInputs[0].values[1], 
+		arrays->floatInputs[0].values[2], 
+		arrays->floatInputs[0].values[3]);
 	::glMatrixMode(GL_MODELVIEW);
 	::glPushMatrix();
 	::glRotatef(myExecuteCount * 1.0f, 0.0f, 0.0f, 1.0f);
@@ -65,7 +154,11 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	// Draw a diamond to test anti-aliasing (it will draw over part of the above square)
 	::glPushMatrix();
 	::glRotatef(-myExecuteCount * 1.0f, 0.0f, 0.0f, .150f);
-	::glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	::glColor4f(
+		arrays->floatInputs[1].values[0], 
+		arrays->floatInputs[1].values[1], 
+		arrays->floatInputs[1].values[2], 
+		arrays->floatInputs[1].values[3]);
 	::glBegin(GL_QUADS);
 	::glVertex2i(outputFormat->width / 2, 0);
 	::glVertex2i(outputFormat->width, outputFormat->height / 2);
@@ -73,7 +166,7 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	::glVertex2i(0, outputFormat->height / 2);
 	::glEnd();
 	::glPopMatrix();
-	
+
 }
 
 

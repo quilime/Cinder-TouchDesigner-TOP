@@ -13,6 +13,7 @@ http://www.geometrictools.com/License/Boost/LICENSE_1_0.txt
 //
 //#include "cinder/app/App.h"
 //#include "cinder/gl/gl.h"
+
 #include "cinder/Rand.h"
 using namespace cinder;
 
@@ -62,22 +63,14 @@ void ParticleSystem::append( const Particle& aParticle )
 	}
 }
 
-void ParticleSystem::update()
+void ParticleSystem::update( Timer& timer )
 {
 	// TODO replace 'app' with alternative
-	// pass in timer from main app
-	/*
-	static float prevTime = (float)ci::app::getElapsedSeconds();
-	float curTime = (float)ci::app::getElapsedSeconds();
+	static float prevTime = (float) timer.getSeconds(); // (float)ci::app::getElapsedSeconds();
+	float curTime = (float) timer.getSeconds(); // (float)ci::app::getElapsedSeconds();
 	float dt = curTime - prevTime;
 	prevTime = curTime;
-	Rectf bounds = ci::app::getWindowBounds();
-	*/
-	static float prevTime = 0.0;
-	float curTime = 0.0;
-	float dt = curTime - prevTime;
-	prevTime = curTime;
-	Rectf bounds = Rectf(0, 0, 500, 500);
+	Rectf bounds = Rectf(0, 0, 500, 500); // ci::app::getWindowBounds();
 
 	float minX = -kBorder;
 	float minY = -kBorder;

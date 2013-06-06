@@ -16,6 +16,8 @@ http://www.geometrictools.com/License/Boost/LICENSE_1_0.txt
 #include "cinder/Color.h"
 #include "cinder/Rect.h"
 #include "cinder/Vector.h"
+#include "cinder/Timer.h"
+
 using ci::Colorf;
 using ci::Rectf;
 using ci::Vec2f;
@@ -92,7 +94,7 @@ public:
 	void			append( const Particle& aParticle );
 
 	void			setup( const Rectf& aBounds, Fluid2D* aFluid );
-	void			update();
+	void			update( ci::Timer& timer );
 	void			draw();
 
 private:

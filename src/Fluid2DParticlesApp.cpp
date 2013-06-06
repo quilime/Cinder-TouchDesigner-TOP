@@ -44,7 +44,7 @@ private:
 	//
 	ParticleSystem				mParticles;
 	ci::Colorf					mColor;
-	std::map<int, ci::Colorf>	mTouchColors;	
+	std::map<int, ci::Colorf>	mTouchColors;
 };
 
 using namespace ci;
