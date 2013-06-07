@@ -119,8 +119,8 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	// generate some movement so we can see some particles
 	ppx = px;
 	ppy = py;
-	px = 500  + (sin((float) myExecuteCount * 0.004) * 300);
-	py = 500  + (sin((float) myExecuteCount * 0.02) * 300);
+	px = 500 + (sin((float) myExecuteCount * 0.004) * 300);
+	py = 500 + (sin((float) myExecuteCount * 0.02)  * 300);
 
 	// random color
 	Colorf color;
@@ -150,7 +150,7 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 
 	// draw fluid texture
 	//gl::color( ColorAf( 1.0f, 1.0f, 1.0f, 0.999f ) );
-	//float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
+	float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
 	//Surface32f surf( data, mFluid2D.resX(), mFluid2D.resY(), mFluid2D.resX()*sizeof(Colorf), SurfaceChannelOrder::RGB );
 	//if ( ! mTex ) {
 	//	mTex = gl::Texture( surf );
@@ -160,9 +160,50 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	//gl::draw( mTex, getWindowBounds() );
 	//mTex.unbind();
 	
+	//glColor3f(1,1,1);
+	glPushMatrix();
+	glTranslatef(Vec3f(outputFormat->width/2, outputFormat->height/2, 0));
+	glScalef(50, 50, 0);
+	glRotatef(myExecuteCount * 0.25, 0, 0, 1);
 
-	// draw particles
+	glEnable(GL_TEXTURE_2D);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+	glBindTexture(GL_TEXTURE_2D, (GLuint) data);
+
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0, 0.0); 
+	glVertex3f(-1.0, -1.0, 0.0);
+	glTexCoord2f(0.0, 1.0); 
+	glVertex3f(-1.0,  1.0, 0.0);
+	glTexCoord2f(1.0, 1.0); 
+	glVertex3f(1.0,   1.0, 0.0);
+	glTexCoord2f(1.0, 0.0); 
+	glVertex3f(1.0,  -1.0, 0.0);
+	//glTexCoord2f(0.0, 0.0); 
+	//glVertex3f(1.0,     -1.0,  0.0);
+	//glTexCoord2f(0.0, 1.0); 
+	//glVertex3f(1.0,      1.0,  0.0);
+	//glTexCoord2f(1.0, 1.0);
+	//glVertex3f(2.41421,  1.0, -1.41421);
+	//glTexCoord2f(1.0, 0.0); 
+	//glVertex3f(2.41421, -1.0, -1.41421);
+	glEnd();
+
+	glPopMatrix();
+
+	glFlush();
+	glDisable(GL_TEXTURE_2D);
+
+
+
+
+
+
+
+	// draw fluid particles
 	glPointSize( arrays->floatInputs[0].values[0] );
+	//glColor4f(1,1,1,1);
 	glBegin( GL_POINTS );
 	for( int i = 0; i < mParticles.numParticles(); ++i ) {
 		const Particle& part = mParticles.at( i );
@@ -176,6 +217,24 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	}
 	glEnd();
 
+
+
+
+
+
+
+    //// Lets just draw a small red square in the lower left quadrant of the texture
+    //::glColor4f(1, 0, 0, 1);
+    //::glMatrixMode(GL_MODELVIEW);
+    //::glPushMatrix();
+    //::glRotatef(myExecuteCount, 1.0f, 1.0f, 1.0f);
+    //::glBegin(GL_QUADS);
+    //::glVertex2i(0, 0);
+    //::glVertex2i(outputFormat->width / 2, 0);
+    //::glVertex2i(outputFormat->width / 2, outputFormat->height / 2);
+    //::glVertex2i(0, outputFormat->height / 2);
+    //::glEnd();
+    //::glPopMatrix();
 
 
 	/*
