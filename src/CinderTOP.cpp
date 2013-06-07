@@ -116,11 +116,13 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	// update
 	myExecuteCount++;
 
+	// generate some movement so we can see some particles
 	ppx = px;
 	ppy = py;
 	px = 500  + (sin((float) myExecuteCount * 0.004) * 300);
 	py = 500  + (sin((float) myExecuteCount * 0.02) * 300);
 
+	// random color
 	Colorf color;
 	color.r = Rand::randFloat();
 	color.g = Rand::randFloat();
@@ -129,7 +131,7 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	float s = 10;
 	Vec2f prevPos = Vec2f(ppx, ppy);
 	Vec2f pos = Vec2f(px, py);
-	float x = (pos.x / (float) outputFormat->width ) * mFluid2D.resX();
+	float x = (pos.x / (float) outputFormat->width )  * mFluid2D.resX();
 	float y = (pos.y / (float) outputFormat->height ) * mFluid2D.resY();	
 	Vec2f dv = pos - prevPos;
 	mFluid2D.splatVelocity( x, y, mVelScale * dv );
@@ -146,7 +148,7 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	mFluid2D.step();
 	mParticles.update( &mTimer );
 
-
+	// draw fluid texture
 	//gl::color( ColorAf( 1.0f, 1.0f, 1.0f, 0.999f ) );
 	//float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
 	//Surface32f surf( data, mFluid2D.resX(), mFluid2D.resY(), mFluid2D.resX()*sizeof(Colorf), SurfaceChannelOrder::RGB );
@@ -158,22 +160,14 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	//gl::draw( mTex, getWindowBounds() );
 	//mTex.unbind();
 	
-	//glColor4f(color.r,color.b,color.g, 1.0);
-	//glPointSize( 10.0 );
-	//glBegin(GL_POINTS);
- //   glVertex2i(0, 0);
- //   glVertex2i(400, 400);
-	//glVertex2i(200, 200);
- //   glEnd();
-
 
 	// draw particles
 	glPointSize( arrays->floatInputs[0].values[0] );
 	glBegin( GL_POINTS );
 	for( int i = 0; i < mParticles.numParticles(); ++i ) {
 		const Particle& part = mParticles.at( i );
-//		if( ! part.alive() )
-//			continue;
+		if( ! part.alive() )
+			continue;
 		float alpha = part.age() * part.invLife();
 		alpha = 1.0f; // - std::min( alpha, 1.0f );
 		alpha = std::min( alpha, 0.8f );
@@ -181,23 +175,6 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 		glVertex2f( part.pos() );
 	}
 	glEnd();
-
-
-
-
-
-
-	//mParams.draw();
-
-
-	// draw
-
-
-	// clear out the window with black
-	// glClearColor(0,0,0,0);
-	// glDepthMask( GL_TRUE );
-	// glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
 
 
 
@@ -237,52 +214,12 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	glMatrixMode(GL_MODELVIEW);
 
 	*/
-
-	
-
-
-	/*
-	// Lets just draw a small red square in the lower left quadrant of the texture
-	::glColor4f(
-		arrays->floatInputs[0].values[0], 
-		arrays->floatInputs[0].values[1], 
-		arrays->floatInputs[0].values[2], 
-		arrays->floatInputs[0].values[3]);
-	::glMatrixMode(GL_MODELVIEW);
-	::glPushMatrix();
-	::glRotatef(myExecuteCount * 1.0f, 0.0f, 0.0f, 1.0f);
-	::glBegin(GL_QUADS);
-	::glVertex2i(0, 0);
-	::glVertex2i(outputFormat->width / 2, 0);
-	::glVertex2i(outputFormat->width / 2, outputFormat->height / 2);
-	::glVertex2i(0, outputFormat->height / 2);
-	::glEnd();
-	::glPopMatrix();
-
-	// Draw a diamond to test anti-aliasing (it will draw over part of the above square)
-	::glPushMatrix();
-	::glRotatef(-myExecuteCount * 1.0f, 0.0f, 0.0f, .150f);
-	::glColor4f(
-		arrays->floatInputs[1].values[0], 
-		arrays->floatInputs[1].values[1], 
-		arrays->floatInputs[1].values[2], 
-		arrays->floatInputs[1].values[3]);
-	::glBegin(GL_QUADS);
-	::glVertex2i(outputFormat->width / 2, 0);
-	::glVertex2i(outputFormat->width, outputFormat->height / 2);
-	::glVertex2i(outputFormat->width / 2, outputFormat->height);
-	::glVertex2i(0, outputFormat->height / 2);
-	::glEnd();
-	::glPopMatrix();
-	*/
 }
 
 
 
 
 void CinderTOP::getGeneralInfo(TOP_GeneralInfo *ginfo) {
-	// Uncomment this line if you want the TOP to cook every frame even
-	// if none of it's inputs/parameters are changing.
 	ginfo->cookEveryFrame = true;
 }
 
@@ -304,9 +241,7 @@ int CinderTOP::getNumInfoCHOPChans() {
 void CinderTOP::getInfoCHOPChan(int index, TOP_InfoCHOPChan *chan) {
 	// This function will be called once for each channel we said we'd want to return
 	// In this example it'll only be called once.
-
-	if (index == 0)
-	{
+	if (index == 0) {
 		chan->name = "executeCount";
 		chan->value = myExecuteCount * 1.0f;
 	}
@@ -322,8 +257,7 @@ bool CinderTOP::getInfoDATSize(TOP_InfoDATSize *infoSize) {
 }
 
 void CinderTOP::getInfoDATEntries(int index, int nEntries, TOP_InfoDATEntries *entries) {
-	if (index == 0)
-	{
+	if (index == 0) {
 		// It's safe to use static buffers here because Touch will make it's own
 		// copies of the strings immediately after this call returns
 		// (so the buffers can be reuse for each column/row)
@@ -332,7 +266,6 @@ void CinderTOP::getInfoDATEntries(int index, int nEntries, TOP_InfoDATEntries *e
 		// Set the value for the first column
 		strcpy_s(tempBuffer1, "executeCount");
 		entries->values[0] = tempBuffer1;
-
 		// Set the value for the second column
 		sprintf_s(tempBuffer2, "%d", myExecuteCount);
 		entries->values[1] = tempBuffer2;
