@@ -113,6 +113,9 @@ CinderTOP::~CinderTOP() {}
 // DRAW LOOP
 void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_InputArrays* arrays, void* reserved) {
 	
+
+	
+
 	// update
 	myExecuteCount++;
 
@@ -161,40 +164,48 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	//mTex.unbind();
 	
 	//glColor3f(1,1,1);
-	glPushMatrix();
-	glTranslatef(Vec3f(outputFormat->width/2, outputFormat->height/2, 0));
-	glScalef(50, 50, 0);
-	glRotatef(myExecuteCount * 0.25, 0, 0, 1);
 
-	glEnable(GL_TEXTURE_2D);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-	glBindTexture(GL_TEXTURE_2D, (GLuint) data);
+	if (arrays->TOPInputs->textureIndex) {
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0, 0.0); 
-	glVertex3f(-1.0, -1.0, 0.0);
-	glTexCoord2f(0.0, 1.0); 
-	glVertex3f(-1.0,  1.0, 0.0);
-	glTexCoord2f(1.0, 1.0); 
-	glVertex3f(1.0,   1.0, 0.0);
-	glTexCoord2f(1.0, 0.0); 
-	glVertex3f(1.0,  -1.0, 0.0);
-	//glTexCoord2f(0.0, 0.0); 
-	//glVertex3f(1.0,     -1.0,  0.0);
-	//glTexCoord2f(0.0, 1.0); 
-	//glVertex3f(1.0,      1.0,  0.0);
-	//glTexCoord2f(1.0, 1.0);
-	//glVertex3f(2.41421,  1.0, -1.41421);
-	//glTexCoord2f(1.0, 0.0); 
-	//glVertex3f(2.41421, -1.0, -1.41421);
-	glEnd();
+		glColor3f(0,0,0);
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+		glBindTexture(GL_TEXTURE_2D, arrays->TOPInputs->textureIndex);
 
-	glPopMatrix();
+		glPushMatrix();
+		glTranslatef(Vec3f(outputFormat->width/2, outputFormat->height/2, 0));
+		//glScalef(50, 50, 0);
 
-	glFlush();
-	glDisable(GL_TEXTURE_2D);
+		float hw = outputFormat->width/2;
+		float hh = outputFormat->height/2;
+		
+		//glRotatef(myExecuteCount * 0.25, 0, 0, 1);
 
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0, 0.0); 
+		glVertex3f(-hw, -hh, 0.0);
+		glTexCoord2f(0.0, 1.0); 
+		glVertex3f(-hw, hh, 0.0);
+		glTexCoord2f(1.0, 1.0);
+		glVertex3f(hw, hh, 0.0);
+		glTexCoord2f(1.0, 0.0); 
+		glVertex3f(hw, -hh, 0.0);
+		//glTexCoord2f(0.0, 0.0); 
+		//glVertex3f(1.0,     -1.0,  0.0);
+		//glTexCoord2f(0.0, 1.0); 
+		//glVertex3f(1.0,      1.0,  0.0);
+		//glTexCoord2f(1.0, 1.0);
+		//glVertex3f(2.41421,  1.0, -1.41421);
+		//glTexCoord2f(1.0, 0.0); 
+		//glVertex3f(2.41421, -1.0, -1.41421);
+		glEnd();
+		glPopMatrix();
+
+		glFlush();
+		glDisable(GL_TEXTURE_2D);
+
+	}
 
 
 
