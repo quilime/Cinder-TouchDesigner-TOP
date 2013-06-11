@@ -114,9 +114,6 @@ FluidSimTOP::~FluidSimTOP() {}
 // DRAW LOOP
 void FluidSimTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_InputArrays* arrays, void* reserved) {
 	
-
-	
-
 	// update
 	myExecuteCount++;
 
@@ -126,7 +123,7 @@ void FluidSimTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_
 	px = 500 + (sin((float) myExecuteCount * 0.004) * 300);
 	py = 500 + (sin((float) myExecuteCount * 0.02)  * 300);
 
-	// random color
+	// create a random color every frame
 	Colorf color;
 	color.r = Rand::randFloat();
 	color.g = Rand::randFloat();
@@ -138,11 +135,15 @@ void FluidSimTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_
 	float x = (pos.x / (float) outputFormat->width )  * mFluid2D.resX();
 	float y = (pos.y / (float) outputFormat->height ) * mFluid2D.resY();	
 	Vec2f dv = pos - prevPos;
+
+	// create fluid splat
 	mFluid2D.splatVelocity( x, y, mVelScale * dv );
 	mFluid2D.splatRgb( x, y, mRgbScale * color );
 	if( mFluid2D.isBuoyancyEnabled() ) {
 		mFluid2D.splatDensity( x, y, mDenScale );
 	}
+
+	// generate some particles
 	for( int i = 0; i < 5; ++i ) {
 		Vec2f partPos = pos + Vec2f( Rand::randFloat( -s, s ), Rand::randFloat( -s, s ) );
 		float life = Rand::randFloat( 3.0f, 6.0f );
@@ -155,9 +156,6 @@ void FluidSimTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_
 
 
 	////////////////////
-
-
-
 
 	// draw fluid texture
 	//gl::color( ColorAf( 1.0f, 1.0f, 1.0f, 0.999f ) );
