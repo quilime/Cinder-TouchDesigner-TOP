@@ -12,9 +12,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{095FF399-F4A7-43EF-BB02-25E44CE05DF9}</ProjectGuid>
-    <RootNamespace>CinderProject</RootNamespace>
+    <RootNamespace>FluidSimTOP</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>CinderTOP</ProjectName>
+    <ProjectName>FluidSimTop</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -116,7 +116,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\cinderfx\Fluid2D.cpp" />
-    <ClCompile Include="..\src\CinderTOP.cpp" />
+    <ClCompile Include="..\src\FluidSimTOP.cpp" />
     <ClCompile Include="..\src\Particles.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

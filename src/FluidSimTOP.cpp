@@ -15,10 +15,10 @@
 
 
 
-class CinderTOP : public TOP_CPlusPlusBase {
+class FluidSimTOP : public TOP_CPlusPlusBase {
 	public:
-		CinderTOP (const TOP_NodeInfo *info);
-		virtual			~CinderTOP();
+		FluidSimTOP (const TOP_NodeInfo *info);
+		virtual			~FluidSimTOP();
 		virtual void	getGeneralInfo(TOP_GeneralInfo *);
 		virtual bool	getOutputFormat(TOP_OutputFormat*);
 		virtual void	execute(const TOP_OutputFormatSpecs*, const TOP_InputArrays*, void* reserved);
@@ -50,6 +50,7 @@ class CinderTOP : public TOP_CPlusPlusBase {
 		ci::gl::Texture				mTex;
 		ParticleSystem				mParticles;
 		ci::Colorf					mColor;
+		GLuint						mFluidTex;
 };
 
 
@@ -59,7 +60,7 @@ using namespace std;
 
 
 // SETUP
-CinderTOP::CinderTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
+FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 
 	myExecuteCount = 0;
 	mTimer.start();
@@ -107,11 +108,11 @@ CinderTOP::CinderTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 
 	mParticles.setup(Rectf(0, 0, 1024, 1024), &mFluid2D );
 }
-CinderTOP::~CinderTOP() {}
+FluidSimTOP::~FluidSimTOP() {}
 
 
 // DRAW LOOP
-void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_InputArrays* arrays, void* reserved) {
+void FluidSimTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_InputArrays* arrays, void* reserved) {
 	
 
 	
@@ -151,10 +152,17 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	mFluid2D.step();
 	mParticles.update( &mTimer );
 
+
+
+	////////////////////
+
+
+
+
 	// draw fluid texture
 	//gl::color( ColorAf( 1.0f, 1.0f, 1.0f, 0.999f ) );
 	float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
-	//Surface32f surf( data, mFluid2D.resX(), mFluid2D.resY(), mFluid2D.resX()*sizeof(Colorf), SurfaceChannelOrder::RGB );
+	//Surface32f surf( data, mFluid2D.resX(), mFluid2D.resY(), mFluid2D.resX() * sizeof(Colorf), SurfaceChannelOrder::RGB );
 	//if ( ! mTex ) {
 	//	mTex = gl::Texture( surf );
 	//} else {
@@ -165,22 +173,72 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 	
 	//glColor3f(1,1,1);
 
+
+	
+
+	
+
+	
+	//glBindTexture(GL_TEXTURE_2D, mFluidTex);
+	//glTexImage2D(GL_TEXTURE_2D, 0 , GL_RGB, mFluid2D.resX(), mFluid2D.resY(), 0, GL_RGB,GL_FLOAT, data);
+	
+	//free(data);
+
+	
+	//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+
+	/*
+	
+	glColor3f(0, 0, 0);
+
+	float hhw = (outputFormat->width / 2);
+	float hhh = (outputFormat->height / 2);
+
+	glGenTextures( 1, &mFluidTex );
+
+	glEnable(GL_TEXTURE_2D);
+	glTexImage2D(GL_TEXTURE_2D, 0 , GL_RGB, mFluid2D.resX(), mFluid2D.resY(), 0, GL_RGB,GL_FLOAT, data);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+	glBindTexture(GL_TEXTURE_2D, mFluidTex);
+
+	glPushMatrix();
+	glTranslatef(Vec3f(hhw, hhh, 0));
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0, 0.0); 
+	glVertex3f(-hhw, -hhh, 0.0);
+	glTexCoord2f(0.0, 1.0); 
+	glVertex3f(-hhw, hhh, 0.0);
+	glTexCoord2f(1.0, 1.0);
+	glVertex3f(hhw, hhh, 0.0);
+	glTexCoord2f(1.0, 0.0); 
+	glVertex3f(hhw, -hhh, 0.0);
+	glEnd();
+	glPopMatrix();
+
+	glDisable(GL_TEXTURE_2D);
+	
+	*/
+
+
+
+	//////////////////////
+
+
+	// draw incoming texture from index
 	if (arrays->TOPInputs->textureIndex) {
 
+		float hw = outputFormat->width / 4;
+		float hh = outputFormat->height / 4;
+
 		glColor3f(0,0,0);
+		
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 		glBindTexture(GL_TEXTURE_2D, arrays->TOPInputs->textureIndex);
 
 		glPushMatrix();
-		glTranslatef(Vec3f(outputFormat->width/2, outputFormat->height/2, 0));
-		//glScalef(50, 50, 0);
-
-		float hw = outputFormat->width/2;
-		float hh = outputFormat->height/2;
-		
-		//glRotatef(myExecuteCount * 0.25, 0, 0, 1);
-
+		glTranslatef(Vec3f(hw, hh, 0));
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
 		glBegin(GL_QUADS);
 		glTexCoord2f(0.0, 0.0); 
@@ -191,22 +249,14 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 		glVertex3f(hw, hh, 0.0);
 		glTexCoord2f(1.0, 0.0); 
 		glVertex3f(hw, -hh, 0.0);
-		//glTexCoord2f(0.0, 0.0); 
-		//glVertex3f(1.0,     -1.0,  0.0);
-		//glTexCoord2f(0.0, 1.0); 
-		//glVertex3f(1.0,      1.0,  0.0);
-		//glTexCoord2f(1.0, 1.0);
-		//glVertex3f(2.41421,  1.0, -1.41421);
-		//glTexCoord2f(1.0, 0.0); 
-		//glVertex3f(2.41421, -1.0, -1.41421);
 		glEnd();
 		glPopMatrix();
 
-		glFlush();
 		glDisable(GL_TEXTURE_2D);
-
+		glFlush();
 	}
 
+	
 
 
 
@@ -289,11 +339,11 @@ void CinderTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_In
 
 
 
-void CinderTOP::getGeneralInfo(TOP_GeneralInfo *ginfo) {
+void FluidSimTOP::getGeneralInfo(TOP_GeneralInfo *ginfo) {
 	ginfo->cookEveryFrame = true;
 }
 
-bool CinderTOP::getOutputFormat(TOP_OutputFormat *format) {
+bool FluidSimTOP::getOutputFormat(TOP_OutputFormat *format) {
 	// In this function we could assign variable values to 'format' to specify
 	// the pixel format/resolution etc that we want to output to.
 	// If we did that, we'd want to return true to tell the TOP to use the settings we've
@@ -302,13 +352,13 @@ bool CinderTOP::getOutputFormat(TOP_OutputFormat *format) {
 	return false;
 }
 
-int CinderTOP::getNumInfoCHOPChans() {
+int FluidSimTOP::getNumInfoCHOPChans() {
 	// We return the number of channel we want to output to any Info CHOP
 	// connected to the TOP. In this example we are just going to send one channel.
 	return 1;
 }
 
-void CinderTOP::getInfoCHOPChan(int index, TOP_InfoCHOPChan *chan) {
+void FluidSimTOP::getInfoCHOPChan(int index, TOP_InfoCHOPChan *chan) {
 	// This function will be called once for each channel we said we'd want to return
 	// In this example it'll only be called once.
 	if (index == 0) {
@@ -317,7 +367,7 @@ void CinderTOP::getInfoCHOPChan(int index, TOP_InfoCHOPChan *chan) {
 	}
 }
 
-bool CinderTOP::getInfoDATSize(TOP_InfoDATSize *infoSize) {
+bool FluidSimTOP::getInfoDATSize(TOP_InfoDATSize *infoSize) {
 	infoSize->rows = 1;
 	infoSize->cols = 2;
 	// Setting this to false means we'll be assigning values to the table
@@ -326,7 +376,7 @@ bool CinderTOP::getInfoDATSize(TOP_InfoDATSize *infoSize) {
 	return true;
 }
 
-void CinderTOP::getInfoDATEntries(int index, int nEntries, TOP_InfoDATEntries *entries) {
+void FluidSimTOP::getInfoDATEntries(int index, int nEntries, TOP_InfoDATEntries *entries) {
 	if (index == 0) {
 		// It's safe to use static buffers here because Touch will make it's own
 		// copies of the strings immediately after this call returns
@@ -355,12 +405,12 @@ extern "C"
 	DLLEXPORT TOP_CPlusPlusBase* CreateTOPInstance(const TOP_NodeInfo *info) {
 		// Return a new instance of your class every time this is called.
 		// It will be called once per TOP that is using the .dll
-		return new CinderTOP(info);
+		return new FluidSimTOP(info);
 	}
 	DLLEXPORT void DestroyTOPInstance(TOP_CPlusPlusBase *instance) {
 		// Delete the instance here, this will be called when
 		// Touch is shutting down, when the TOP using that instance is deleted, or
 		// if the TOP loads a different DLL
-		delete (CinderTOP*)instance;
+		delete (FluidSimTOP*)instance;
 	}
 };
