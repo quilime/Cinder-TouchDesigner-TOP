@@ -180,11 +180,10 @@ void FluidSimTOP::execute(
 }
 
 
-
-
 void FluidSimTOP::getGeneralInfo(TOP_GeneralInfo *ginfo) {
 	ginfo->cookEveryFrame = false;
 }
+
 
 bool FluidSimTOP::getOutputFormat(TOP_OutputFormat *format) {
 	// In this function we could assign variable values to 'format' to specify
@@ -195,11 +194,13 @@ bool FluidSimTOP::getOutputFormat(TOP_OutputFormat *format) {
 	return false;
 }
 
+
 int FluidSimTOP::getNumInfoCHOPChans() {
 	// We return the number of channel we want to output to any Info CHOP
 	// connected to the TOP. In this example we are just going to send one channel.
 	return 1;
 }
+
 
 void FluidSimTOP::getInfoCHOPChan(int index, TOP_InfoCHOPChan *chan) {
 	// This function will be called once for each channel we said we'd want to return
@@ -210,6 +211,7 @@ void FluidSimTOP::getInfoCHOPChan(int index, TOP_InfoCHOPChan *chan) {
 	}
 }
 
+
 bool FluidSimTOP::getInfoDATSize(TOP_InfoDATSize *infoSize) {
 	infoSize->rows = 1;
 	infoSize->cols = 2;
@@ -218,6 +220,7 @@ bool FluidSimTOP::getInfoDATSize(TOP_InfoDATSize *infoSize) {
 	infoSize->byColumn = false;
 	return true;
 }
+
 
 void FluidSimTOP::getInfoDATEntries(int index, int nEntries, TOP_InfoDATEntries *entries) {
 	if (index == 0) {
@@ -235,10 +238,7 @@ void FluidSimTOP::getInfoDATEntries(int index, int nEntries, TOP_InfoDATEntries 
 	}
 }
 
-// These functions are basic C function, which the DLL loader can find
-// much easier than finding a C++ Class.
-// The DLLEXPORT prefix is needed so the compile exports these functions from the .dll
-// you are creating
+
 extern "C" 
 {
 	DLLEXPORT int GetTOPAPIVersion(void) {
@@ -254,9 +254,25 @@ extern "C"
 		// Delete the instance here, this will be called when
 		// Touch is shutting down, when the TOP using that instance is deleted, or
 		// if the TOP loads a different DLL
-		delete (FluidSimTOP*)instance;
+		delete (FluidSimTOP*) instance;
 	}
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
