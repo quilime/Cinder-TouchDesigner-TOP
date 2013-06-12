@@ -1,10 +1,12 @@
-Fluid Sim TOP
+Fluid Sim C++ TOP DLL
 
-For use with TouchDesigner v77
+For use with TouchDesigner v77 cplusplus TOP
 IDE: Visual Studio 2010
 OS: Windows 7 OS
 
 Author
 Gabriel Dunne <gdunne@quilime.com>
 
+(c) 2013
+Obscura Digital
 June 2013
