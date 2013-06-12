@@ -1,12 +1,9 @@
 #include "cinder/Cinder.h"
-
 #include "cinder/gl/gl.h"
 #include "cinder/gl/GlslProg.h"
 #include "cinder/gl/Texture.h"
-\
 #include "cinder/Rand.h"
 #include "cinder/Timer.h"
-
 #include "cinderfx/Fluid2D.h"
 
 #include "Particles.h"
@@ -14,8 +11,8 @@
 #include "TOP_CPlusPlusBase.h"
 
 
-
 class FluidSimTOP : public TOP_CPlusPlusBase {
+
 	public:
 		FluidSimTOP (const TOP_NodeInfo *info);
 		virtual			~FluidSimTOP();
@@ -26,13 +23,10 @@ class FluidSimTOP : public TOP_CPlusPlusBase {
 		virtual void	getInfoCHOPChan(int index, TOP_InfoCHOPChan *chan);
 		virtual bool	getInfoDATSize(TOP_InfoDATSize *infoSize);
 		virtual void	getInfoDATEntries(int index, int nEntries, TOP_InfoDATEntries *entries);
+
 	private:
-		// We don't need to store this pointer, but we do for the example.
-		// The TOP_NodeInfo class store information about the node that's using
-		// this instance of the class (like its name).
 		const TOP_NodeInfo		*myNodeInfo;
-		// In this example this value will be incremented each time the execute()
-		// function is called, then passes back to the TOP 
+
 		int							myExecuteCount;
 
 		float						px;
@@ -49,9 +43,7 @@ class FluidSimTOP : public TOP_CPlusPlusBase {
 		cinderfx::Fluid2D			mFluid2D;
 		ci::gl::Texture				mTex;
 		ParticleSystem				mParticles;
-		ci::Colorf					mColor;
-		//GLuint						mFluidTexture;
-		
+		ci::Colorf					mColor;		
 };
 
 
@@ -60,10 +52,10 @@ using namespace cinderfx;
 using namespace std;
 
 
-// SETUP
 FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 
 	myExecuteCount = 0;
+
 	mTimer.start();
 
 	mRgbScale = 50;
@@ -108,18 +100,16 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	mFluid2D.enableVorticityConfinement();
 
 	mParticles.setup(Rectf(0, 0, 1024, 1024), &mFluid2D );
-
-
-
-
 }
 FluidSimTOP::~FluidSimTOP() {}
 
 
-// DRAW LOOP
-void FluidSimTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_InputArrays* arrays, void* reserved) {
-	
-	// update
+void FluidSimTOP::execute(
+		const TOP_OutputFormatSpecs* outputFormat , 
+		const TOP_InputArrays* arrays, void* reserved) {
+
+
+	// UPDATE
 	myExecuteCount++;
 
 	// generate some movement so we can see some particles
@@ -134,6 +124,7 @@ void FluidSimTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_
 	color.g = Rand::randFloat();
 	color.b = Rand::randFloat();
 
+	// createa movement that will disrupt the fluid field
 	float s = 10;
 	Vec2f prevPos = Vec2f(ppx, ppy);
 	Vec2f pos = Vec2f(px, py);
@@ -148,9 +139,11 @@ void FluidSimTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_
 		mFluid2D.splatDensity( x, y, mDenScale );
 	}
 
-	// generate some particles
+	// generate some particles on some position
 	for( int i = 0; i < 5; ++i ) {
-		Vec2f partPos = pos + Vec2f( Rand::randFloat( -s, s ), Rand::randFloat( -s, s ) );
+		Vec2f partPos = pos + Vec2f( 
+			Rand::randFloat( -s, s ), 
+			Rand::randFloat( -s, s ));
 		float life = Rand::randFloat( 3.0f, 6.0f );
 		mParticles.append( Particle( partPos, life, color ) );
 	}
@@ -158,132 +151,20 @@ void FluidSimTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_
 	mFluid2D.step();
 	mParticles.update( &mTimer );
 
-
-
-	////////////////////
-
-	// draw fluid texture
-	//gl::color( ColorAf( 1.0f, 1.0f, 1.0f, 0.999f ) );
+	// get fluidsim texturedata
 	float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
-	//Surface32f surf( data, mFluid2D.resX(), mFluid2D.resY(), mFluid2D.resX() * sizeof(Colorf), SurfaceChannelOrder::RGB );
-	//if ( ! mTex ) {
-	//	mTex = gl::Texture( surf );
-	//} else {
-	//	mTex.update( surf );
-	//}
-	//gl::draw( mTex, getWindowBounds() );
-	//mTex.unbind();
-	
-	//glColor3f(1,1,1);
 
 
-	//glBindTexture(GL_TEXTURE_2D, mFluidTex);
-	//glTexImage2D(GL_TEXTURE_2D, 0 , GL_RGB, mFluid2D.resX(), mFluid2D.resY(), 0, GL_RGB,GL_FLOAT, data);
-	//free(data);
-	//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	// DRAW
+	float pointSize = arrays->floatInputs[0].values[0];
+	ColorA pointColor = ColorA(
+		arrays->floatInputs[1].values[0],
+		arrays->floatInputs[1].values[1],
+		arrays->floatInputs[1].values[2],
+		arrays->floatInputs[1].values[3]);
 
-
-
-
-	glColor3f(0, 0, 0);
-
-	
-
-	// build texture from fluid sim
-	/*
-	glGenTextures(1, &mFluidTexture);
-
-	glBindTexture(GL_TEXTURE_2D, mFluidTexture);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE , GL_MODULATE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexImage2D(GL_TEXTURE_2D, 0 , GL_RGB, mFluid2D.resX(), mFluid2D.resY(), 0, GL_RGB,GL_FLOAT, data);
-
-
-	glBindTexture(GL_TEXTURE_2D, mFluidTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0 , GL_RGB, mFluid2D.resX(), mFluid2D.resY(), 0, GL_RGB,GL_FLOAT, data);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-	*/
-	
-	/*
-	glEnable(GL_TEXTURE_2D);
-
-	glGenTextures(1, &mFluidTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0 , GL_RGB, mFluid2D.resX(), mFluid2D.resY(), 0, GL_RGB,GL_FLOAT, data);
-	glBindTexture(GL_TEXTURE_2D, mFluidTexture);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-
-	
-	float hhw = (outputFormat->width / 2);
-	float hhh = (outputFormat->height / 2);
-	glPushMatrix();
-	glTranslatef(Vec3f(hhw, hhh, 0));
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0, 0.0); 
-	glVertex3f(-hhw, -hhh, 0.0);
-	glTexCoord2f(0.0, 1.0); 
-	glVertex3f(-hhw, hhh, 0.0);
-	glTexCoord2f(1.0, 1.0);
-	glVertex3f(hhw, hhh, 0.0);
-	glTexCoord2f(1.0, 0.0); 
-	glVertex3f(hhw, -hhh, 0.0);
-	glEnd();
-	glPopMatrix();
-	
-
-	//glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_TEXTURE_2D);
-	*/
-	
-
-
-
-	//////////////////////
-
-
-	// draw incoming texture from index
-	if (arrays->TOPInputs->textureIndex) {
-
-		float hw = outputFormat->width / 4;
-		float hh = outputFormat->height / 4;
-
-		glColor3f(0,0,0);
-		
-		glEnable(GL_TEXTURE_2D);
-		
-		glBindTexture(GL_TEXTURE_2D, arrays->TOPInputs->textureIndex);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-
-		glPushMatrix();
-		glTranslatef(Vec3f(hw, hh, 0));
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
-		glBegin(GL_QUADS);
-		glTexCoord2f(0.0, 0.0); 
-		glVertex3f(-hw, -hh, 0.0);
-		glTexCoord2f(0.0, 1.0); 
-		glVertex3f(-hw, hh, 0.0);
-		glTexCoord2f(1.0, 1.0);
-		glVertex3f(hw, hh, 0.0);
-		glTexCoord2f(1.0, 0.0); 
-		glVertex3f(hw, -hh, 0.0);
-		glEnd();
-		glPopMatrix();
-
-		glDisable(GL_TEXTURE_2D);
-		glFlush();
-	}
-
-	
-
-
-
-
-
-	// draw fluid particles
-	glPointSize( arrays->floatInputs[0].values[0] );
-	//glColor4f(1,1,1,1);
+	glPointSize( pointSize );
+	glColor4f( pointColor );
 	glBegin( GL_POINTS );
 	for( int i = 0; i < mParticles.numParticles(); ++i ) {
 		const Particle& part = mParticles.at( i );
@@ -296,70 +177,13 @@ void FluidSimTOP::execute(const TOP_OutputFormatSpecs* outputFormat , const TOP_
 		glVertex2f( part.pos() );
 	}
 	glEnd();
-
-
-
-
-
-
-
-    //// Lets just draw a small red square in the lower left quadrant of the texture
-    //::glColor4f(1, 0, 0, 1);
-    //::glMatrixMode(GL_MODELVIEW);
-    //::glPushMatrix();
-    //::glRotatef(myExecuteCount, 1.0f, 1.0f, 1.0f);
-    //::glBegin(GL_QUADS);
-    //::glVertex2i(0, 0);
-    //::glVertex2i(outputFormat->width / 2, 0);
-    //::glVertex2i(outputFormat->width / 2, outputFormat->height / 2);
-    //::glVertex2i(0, outputFormat->height / 2);
-    //::glEnd();
-    //::glPopMatrix();
-
-
-	/*
-	// drawing textures
-
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glOrtho(0.0, outputFormat->width, 0.0, outputFormat->height, -1.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-
-	glLoadIdentity();
-	glDisable(GL_LIGHTING);
-
-	glColor3f(1,1,1);
-	glEnable(GL_TEXTURE_2D);
-	//glBindTexture(GL_TEXTURE_2D, mark_textures[0].id);
-
-	// Draw a textured quad
-	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
-	glTexCoord2f(0, 1); glVertex3f(0, 100, 0);
-	glTexCoord2f(1, 1); glVertex3f(100, 100, 0);
-	glTexCoord2f(1, 0); glVertex3f(100, 0, 0);
-	glEnd();
-
-
-	glDisable(GL_TEXTURE_2D);
-	glPopMatrix();
-
-
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-
-	glMatrixMode(GL_MODELVIEW);
-
-	*/
 }
 
 
 
 
 void FluidSimTOP::getGeneralInfo(TOP_GeneralInfo *ginfo) {
-	ginfo->cookEveryFrame = true;
+	ginfo->cookEveryFrame = false;
 }
 
 bool FluidSimTOP::getOutputFormat(TOP_OutputFormat *format) {
@@ -433,3 +257,51 @@ extern "C"
 		delete (FluidSimTOP*)instance;
 	}
 };
+
+
+
+
+
+/*
+
+NOTES
+*/
+
+
+
+/*
+	// drawing textures
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0.0, outputFormat->width, 0.0, outputFormat->height, -1.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+
+	glLoadIdentity();
+	glDisable(GL_LIGHTING);
+
+	glColor3f(1,1,1);
+	glEnable(GL_TEXTURE_2D);
+	//glBindTexture(GL_TEXTURE_2D, mark_textures[0].id);
+
+	// Draw a textured quad
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
+	glTexCoord2f(0, 1); glVertex3f(0, 100, 0);
+	glTexCoord2f(1, 1); glVertex3f(100, 100, 0);
+	glTexCoord2f(1, 0); glVertex3f(100, 0, 0);
+	glEnd();
+
+
+	glDisable(GL_TEXTURE_2D);
+	glPopMatrix();
+
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+
+	glMatrixMode(GL_MODELVIEW);
+
+	*/

@@ -104,9 +104,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ResourceCompile Include="Resources.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\include\Resources.h" />
     <ClInclude Include="..\src\cinderfx\Clamp.h" />
     <ClInclude Include="..\src\cinderfx\Fluid2D.h" />
