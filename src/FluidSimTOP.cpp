@@ -108,8 +108,8 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	*/
 
 
-	mParticles.useParticleStreams();
-	mParticles.setNumParticleStreams(20);
+	mParticles.useParticleStreams(false);
+	//mParticles.setNumParticleStreams(20);
 	mParticles.setup(Rectf(0, 0, 1024, 1024), &mFluid2D );
 
 	/*
@@ -143,6 +143,10 @@ void FluidSimTOP::execute(
 	float aPointSize = arrays->floatInputs[0].values[0];
 
 	mVelScale = arrays->floatInputs[0].values[1] * max( mFluid2D.resX(), mFluid2D.resY() );
+
+	float useParticleStreams = arrays->floatInputs[0].values[2] > 0 ? true : false;
+	mParticles.useParticleStreams(useParticleStreams);
+	mParticles.setNumParticleStreams(arrays->floatInputs[0].values[3]);
 
 	mColor = ColorA(
 			arrays->floatInputs[1].values[0],
@@ -197,7 +201,6 @@ void FluidSimTOP::execute(
 	color.b = Rand::randFloat();
 
 	// createa movement that will disrupt the fluid field
-	float s = 10;
 	Vec2f pos = Vec2f(	(mPosition.x / (float) outputFormat->width )  * mFluid2D.resX(),
 						(mPosition.y / (float) outputFormat->height ) * mFluid2D.resY());
 	Vec2f dv = mPosition - mPPosition;
@@ -209,7 +212,8 @@ void FluidSimTOP::execute(
 		mFluid2D.splatDensity( pos.x, pos.y, mDenScale );
 	}
 
-	// generate some particles on some position
+	// generate some particles at the position
+	float s = 10;
 	for( int i = 0; i < 5; ++i ) {
 		Vec2f partPos = mPosition + Vec2f( 
 			Rand::randFloat( -s, s ), 
@@ -218,19 +222,12 @@ void FluidSimTOP::execute(
 		mParticles.append( Particle( partPos, life, color ) );
 	}
 
-
-    // create some wind
+    // create wind
     Vec2f wind_vec = flowDirection * flowSpeed;
 	float ypos = mFluid2D.resY() - 2;
     for (int i = 0; i < mFluid2D.resX(); i++) {
             mFluid2D.addVelocity( i, ypos, wind_vec );
     }
-    for (int i = 0; i < mFluid2D.resY(); i++) {
-            //mFluid2D.addVelocity( 2,                                i, vv );
-            //mFluid2D.addVelocity( mFluid2D.resX()-2,  i, vv );
-    }
-
-
 
 	mFluid2D.step();
 	mParticles.setColor( mColor );
@@ -241,10 +238,23 @@ void FluidSimTOP::execute(
 
 
 	// DRAW
-
+	
+	glEnable( GL_BLEND );
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE );	
 
 	glPointSize( aPointSize );
 	glColor4f( mColor );
+
+	glBegin( GL_POINTS );
+	for( int i = 0; i < mParticles.numParticles(); ++i ) {
+		const Particle& part = mParticles.at( i );
+		float alpha = std::min( part.age() / 1.0f, 0.75f );
+		glColor4f( ColorAf( part.color(), alpha ) );
+		glVertex2f( part.pos() );
+	}
+	glEnd();
+
+	/*
 	glBegin( GL_POINTS );
 	for( int i = 0; i < mParticles.numParticles(); ++i ) {
 		const Particle& part = mParticles.at( i );
@@ -257,6 +267,7 @@ void FluidSimTOP::execute(
 		glVertex2f( part.pos() );
 	}
 	glEnd();
+	*/
 }
 
 
