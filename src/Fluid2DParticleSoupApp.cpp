@@ -268,10 +268,6 @@ void Fluid2DParticleSoupApp::update()
 	}
 
 
-
-
-
-	
 	mFluid2D.step();
 	mParticleSoup.setColor( mColor );
 	mParticleSoup.update();

@@ -35,10 +35,17 @@ class Particle {
 public:
 
 	Particle() 
-		: mAge( 0 ), mLife( 0 ) {}
+		:	mAge( 0 ), 
+			mLife( 0 ) {}
 
 	Particle( const Vec2f& aPos, float aLife, const Colorf& aColor ) 
-		: mPos( aPos ), mPrevPos( aPos ), mAccel( 0, 0 ), mAge( 0 ), mLife( aLife ), mInvLife( 1.0f/aLife ), mColor( aColor ) {}
+		:	mPos( aPos ), 
+			mPrevPos( aPos ), 
+			mAccel( 0, 0 ), 
+			mAge( 0 ), 
+			mLife( aLife ), 
+			mInvLife( 1.0f/aLife ), 
+			mColor( aColor ) {}
 
 	Vec2f&			pos() { return mPos; }
 	const Vec2f&	pos() const { return mPos; }
@@ -57,6 +64,8 @@ public:
 	const Colorf&	color() const { return mColor; }
 	void			setColor( const Colorf& aColor ) { mColor = aColor; }
 
+	void			reset( const Vec2f& aPos, float aLife, const Colorf& aColor );
+
 	//void set( const Vec2f& aPos, float aLife, const Colorf& aColor ) {
 	//	setPos( aPos );
 	//	clearForce();
@@ -64,7 +73,8 @@ public:
 	//	setColor( aColor );
 	//}
 
-	void			update( float dt );
+	//void			update( float dt );
+	void			update( float simDt, float ageDt );
 
 private:
 	Vec2f		mPos;
@@ -87,13 +97,20 @@ class ParticleSystem {
 public:
 
 	ParticleSystem() 
-		: mPartPos( 0 ) 
+		:	mPartPos( 0 ),
+			mColor(1.0, 1.0, 1.0)
 	{}
 
 	int				numParticles() const { return (int)mParticles.size(); }
 	Particle&		at( int n ) { return *( mParticles.begin() + (size_t)n ); }
 	const Particle&	at( int n ) const { return *( mParticles.begin() + (size_t)n ); }
 	void			append( const Particle& aParticle );
+
+	const Colorf&	color() const { return mColor; }
+	void			setColor( const Colorf& aColor ) { mColor = aColor; }
+	void			setDirection( Vec2f& dir ) { mDir = dir; } 
+	void			setNumParticleStreams( int n ) { mNumParticleStreams = n; } 
+	void			useParticleStreams( bool v = true ) { mUseParticleStreams = v; } 
 
 	void			setup( const Rectf& aBounds, Fluid2D* aFluid );
 	void			update(ci::Timer* timer );
@@ -103,7 +120,12 @@ private:
 	Rectf					mBounds;
 	Fluid2D*				mFluid;
 	int						mMaxParticles;
+	Colorf					mColor;
+	Vec2f					mDir;
 
+
+	float					mNumParticleStreams;
+	bool					mUseParticleStreams;
 	std::vector<Particle>	mParticles;
 	
 	size_t					mPartPos;

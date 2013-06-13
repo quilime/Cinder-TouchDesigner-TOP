@@ -17,18 +17,22 @@ http://www.geometrictools.com/License/Boost/LICENSE_1_0.txt
 #include "cinder/Rand.h"
 using namespace cinder;
 
-const float kSimDt     = 0.1f;
-const float kSimDt2    = kSimDt*kSimDt;
-const float kPointSize = 2.5f;
-const float kBorder    = kPointSize;
-#if defined ( CINDER_COCOA_TOUCH )
-const float kDampen         = 0.988f;
-const int   kMaxParticles   = 5000;
-#else
+const float kSimDt			= 0.1f;
+const float kSimDt2			= kSimDt*kSimDt;
+const float kPointSize		= 2.5f;
+const float kBorder			= kPointSize;
 const float kDampen         = 0.93f;
-const int   kMaxParticles   = 50000;
-#endif
+const int   kMaxParticles   = 20000;
 
+void Particle::reset( const Vec2f& aPos, float aLife, const Colorf& aColor )
+{
+	mPos = mPrevPos = aPos;
+	mAccel = Vec2f( 0, 0 );
+	mLife = aLife;
+	mAge = 0;
+	mColor = aColor;
+}
+/*
 void Particle::update( float dt )
 {
 	Vec2f vel = mPos - mPrevPos;
@@ -39,13 +43,40 @@ void Particle::update( float dt )
 	
 	mAge += dt;
 }
+*/
+void Particle::update( float simDt, float ageDt )
+{
+	Vec2f vel = mPos - mPrevPos;
+	mPos += vel * simDt;
+	mPos += mAccel * simDt * simDt;
+	mAccel *= kDampen;
+	mPrevPos = mPos;
+	mAge += ageDt;
+}
 
 void ParticleSystem::setup( const Rectf& aBounds, Fluid2D* aFluid )
 {
 	mBounds = aBounds;
 	mFluid = aFluid;
 	
-	mParticles.resize( kMaxParticles );
+	//mParticles.resize( kMaxParticles );
+	
+	Rectf bounds = aBounds;
+	for( int n = 0; n < kMaxParticles; ++n ) {
+		Vec2f P;
+        
+		// from the top
+		if (mUseParticleStreams) {
+			P.x = Rand::randInt(0, mNumParticleStreams) * ( bounds.x2 / mNumParticleStreams );
+			P.y = bounds.getHeight() - 2;
+		} else {
+			P.x = Rand::randFloat( bounds.x1 + 5.0f, bounds.x2 - 5.0f );
+			P.y = Rand::randFloat( bounds.y1 + 5.0f, bounds.y2 - 5.0f );
+		}
+
+		float life = Rand::randFloat( 0.0f, 1.0f );
+		mParticles.push_back( Particle( P, life, mColor ) );
+	}
 }
 
 void ParticleSystem::append( const Particle& aParticle )
@@ -65,13 +96,12 @@ void ParticleSystem::append( const Particle& aParticle )
 
 void ParticleSystem::update(Timer* timer )
 {
-	// TODO replace 'app' with alternative
-	static float prevTime = (float) timer->getSeconds(); // (float)ci::app::getElapsedSeconds();
-	float curTime = (float) timer->getSeconds(); // (float)ci::app::getElapsedSeconds();
+	static float prevTime = (float) timer->getSeconds();
+	float curTime = (float) timer->getSeconds();
 	float dt = curTime - prevTime;
 	prevTime = curTime;
-	Rectf bounds = mBounds; // ci::app::getWindowBounds();
 
+	Rectf bounds = mBounds;
 	float minX = -kBorder;
 	float minY = -kBorder;
 	float maxX = bounds.getWidth();
@@ -79,8 +109,34 @@ void ParticleSystem::update(Timer* timer )
 
 	// Avoid the borders in the remap because the velocity might be zero.
 	// Nothing interesting happens where velocity is zero.
-	float dx = (float)(mFluid->resX() - 4)/(float) bounds.getWidth();
-	float dy = (float)(mFluid->resY() - 4)/(float) bounds.getHeight();
+	float dx = (float)(mFluid->resX() - 4) / (float) bounds.getWidth();
+	float dy = (float)(mFluid->resY() - 4) / (float) bounds.getHeight();
+	for( int i = 0; i < numParticles(); ++i ) {
+		Particle& part = mParticles.at( i );
+		if( part.pos().x < minX || part.pos().y < minY || part.pos().x >= maxX || part.pos().y >= maxY ) {
+			Vec2f P;
+			if (mUseParticleStreams) {
+				P.x = Rand::randInt(0, mNumParticleStreams) * ( bounds.x2 / mNumParticleStreams );
+				P.y = bounds.getHeight() - 2;
+			} else {
+				P.x = Rand::randFloat( bounds.x1 + 5.0f, bounds.x2 - 5.0f );
+				P.y = Rand::randFloat( bounds.y1 + 5.0f, bounds.y2 - 5.0f );
+			}
+			float life = Rand::randFloat( 2.0f, 3.0f );
+			part.reset( P, life, mColor );
+		}
+
+		float x = part.pos().x * dx + 2.0f;
+		float y = part.pos().y * dy + 2.0f;
+
+		Vec2f vel = mFluid->velocity().bilinearSampleChecked( x, y, Vec2f( 0.0f, 0.0f ) );
+		part.addForce( vel );
+
+		part.update( mFluid->dt(), dt );
+		//part.update( dt );
+	}
+
+	/*
 	for( int i = 0; i < numParticles(); ++i ) {
 		Particle& part = mParticles.at( i );
 		if( part.pos().x < minX || part.pos().y < minY || part.pos().x >= maxX || part.pos().y >= maxY ) {
@@ -94,6 +150,7 @@ void ParticleSystem::update(Timer* timer )
 			part.update( dt );
 		}
 	}
+	*/
 }
 
 void ParticleSystem::draw()
