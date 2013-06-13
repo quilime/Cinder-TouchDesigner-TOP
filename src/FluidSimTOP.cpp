@@ -29,11 +29,6 @@ class FluidSimTOP : public TOP_CPlusPlusBase {
 
 		int							myExecuteCount;
 
-		float						px;
-		float						py;
-		float						ppx;
-		float						ppy;
-
 		ci::Timer					mTimer;
 
 		float						mVelScale;
@@ -43,7 +38,11 @@ class FluidSimTOP : public TOP_CPlusPlusBase {
 		cinderfx::Fluid2D			mFluid2D;
 		ci::gl::Texture				mTex;
 		ParticleSystem				mParticles;
-		ci::Colorf					mColor;		
+		ci::Colorf					mColor;
+
+
+		Vec2f						mPosition;
+		Vec2f						mPPosition;
 };
 
 
@@ -64,7 +63,7 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	mFluid2D.set( 64, 64 );
    	mFluid2D.setDensityDissipation( 0.99f );
 	mFluid2D.setRgbDissipation( 0.99f ); 
-	mVelScale = 3.0f*std::max( mFluid2D.resX(), mFluid2D.resY() );
+	mVelScale = 3.0f * max( mFluid2D.resX(), mFluid2D.resY() );
 
 	// from particlesystem
 	//mFluid2D.setDt( 0.1f );
@@ -141,38 +140,42 @@ void FluidSimTOP::execute(
 
 	////////////////
 	// SET VARIABLES
-	float pointSize = arrays->floatInputs[0].values[0];
+	float aPointSize = arrays->floatInputs[0].values[0];
+
+	mVelScale = arrays->floatInputs[0].values[1] * max( mFluid2D.resX(), mFluid2D.resY() );
+
 	mColor = ColorA(
 			arrays->floatInputs[1].values[0],
 			arrays->floatInputs[1].values[1],
 			arrays->floatInputs[1].values[2]);
-        
-	Vec2f position(
+
+    mPPosition = mPosition;
+	mPosition.set(
 			arrays->floatInputs[2].values[0],
 			arrays->floatInputs[2].values[1]);
 	Vec2f orientation(
-			arrays->floatInputs[2].values[2] * outputFormat->width,
-			arrays->floatInputs[2].values[3] * outputFormat->height);
+			arrays->floatInputs[2].values[2],
+			arrays->floatInputs[2].values[3]);
 	float directon = orientation.x;
 
 	Vec2f obstacle1(
-			arrays->floatInputs[3].values[0] * outputFormat->width,
-			arrays->floatInputs[3].values[1] * outputFormat->height);
+			arrays->floatInputs[3].values[0],
+			arrays->floatInputs[3].values[1]);
 	Vec2f obstacle2(
-			arrays->floatInputs[3].values[2] * outputFormat->width,
-			arrays->floatInputs[3].values[3] * outputFormat->height);
+			arrays->floatInputs[3].values[2],
+			arrays->floatInputs[3].values[3]);
 	Vec2f obstacle3(
-			arrays->floatInputs[4].values[0] * outputFormat->width,
-			arrays->floatInputs[4].values[1] * outputFormat->height);
+			arrays->floatInputs[4].values[0],
+			arrays->floatInputs[4].values[1]);
 	Vec2f obstacle4(
-			arrays->floatInputs[4].values[2] * outputFormat->width,
-			arrays->floatInputs[4].values[3] * outputFormat->height);
+			arrays->floatInputs[4].values[2],
+			arrays->floatInputs[4].values[3]);
 	Vec2f obstacle5(
-			arrays->floatInputs[5].values[0] * outputFormat->width,
-			arrays->floatInputs[5].values[1] * outputFormat->height);
+			arrays->floatInputs[5].values[0],
+			arrays->floatInputs[5].values[1]);
 	Vec2f obstacle6(
-			arrays->floatInputs[5].values[2] * outputFormat->width,
-			arrays->floatInputs[5].values[3] * outputFormat->height);
+			arrays->floatInputs[5].values[2],
+			arrays->floatInputs[5].values[3]);
 
 	Vec2f flowDirection(
 			arrays->floatInputs[6].values[0],
@@ -185,10 +188,7 @@ void FluidSimTOP::execute(
 
 
 	// generate some movement so we can see some particles
-	ppx = px;
-	ppy = py;
-	px = position.x; //(float) (500 + (sin((float) myExecuteCount * 0.004) * 300));
-	py = position.y; // (float) (500 + (sin((float) myExecuteCount * 0.02)  * 300));
+	
 
 	// create a random color every frame
 	Colorf color;
@@ -198,22 +198,20 @@ void FluidSimTOP::execute(
 
 	// createa movement that will disrupt the fluid field
 	float s = 10;
-	Vec2f prevPos = Vec2f(ppx, ppy);
-	Vec2f pos = Vec2f(px, py);
-	float x = (pos.x / (float) outputFormat->width )  * mFluid2D.resX();
-	float y = (pos.y / (float) outputFormat->height ) * mFluid2D.resY();	
-	Vec2f dv = pos - prevPos;
+	Vec2f pos = Vec2f(	(mPosition.x / (float) outputFormat->width )  * mFluid2D.resX(),
+						(mPosition.y / (float) outputFormat->height ) * mFluid2D.resY());
+	Vec2f dv = mPosition - mPPosition;
 
 	// create fluid splat
-	mFluid2D.splatVelocity( x, y, mVelScale * dv );
-	mFluid2D.splatRgb( x, y, mRgbScale * color );
+	mFluid2D.splatVelocity( pos.x, pos.y, dv * mVelScale );
+	mFluid2D.splatRgb( pos.x, pos.y, mRgbScale * color );
 	if( mFluid2D.isBuoyancyEnabled() ) {
-		mFluid2D.splatDensity( x, y, mDenScale );
+		mFluid2D.splatDensity( pos.x, pos.y, mDenScale );
 	}
 
 	// generate some particles on some position
 	for( int i = 0; i < 5; ++i ) {
-		Vec2f partPos = pos + Vec2f( 
+		Vec2f partPos = mPosition + Vec2f( 
 			Rand::randFloat( -s, s ), 
 			Rand::randFloat( -s, s ));
 		float life = Rand::randFloat( 3.0f, 6.0f );
@@ -235,6 +233,7 @@ void FluidSimTOP::execute(
 
 
 	mFluid2D.step();
+	mParticles.setColor( mColor );
 	mParticles.update( &mTimer );
 
 	// get fluidsim texturedata
@@ -244,7 +243,7 @@ void FluidSimTOP::execute(
 	// DRAW
 
 
-	glPointSize( pointSize );
+	glPointSize( aPointSize );
 	glColor4f( mColor );
 	glBegin( GL_POINTS );
 	for( int i = 0; i < mParticles.numParticles(); ++i ) {
