@@ -25,8 +25,9 @@ class FluidSimTOP : public TOP_CPlusPlusBase {
 		virtual void	getInfoDATEntries(int index, int nEntries, TOP_InfoDATEntries *entries);
 
 	private:
-		const TOP_NodeInfo		*myNodeInfo;
-
+		void drawSolidCircle( const ci::Vec2f &center, float radius, int numSegments = 0 );
+		
+		const TOP_NodeInfo			*myNodeInfo;
 		int							myExecuteCount;
 
 		ci::Timer					mTimer;
@@ -53,31 +54,31 @@ using namespace std;
 
 FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 
-	myExecuteCount = 0;
-
-	mTimer.start();
-
 	mRgbScale = 50;
 	mDenScale = 50;
 	
 	mFluid2D.set( 64, 64 );
-   	mFluid2D.setDensityDissipation( 0.99f );
-	mFluid2D.setRgbDissipation( 0.99f ); 
-	mVelScale = 3.0f * max( mFluid2D.resX(), mFluid2D.resY() );
 
 	// from particlesystem
 	//mFluid2D.setDt( 0.1f );
-	//mFluid2D.enableDensity();
-	//mFluid2D.enableRgb();
-	//mFluid2D.enableVorticityConfinement();
 	
-	// particle soup
-	mFluid2D.setVelocityDissipation( 1.0f );
 	mFluid2D.enableDensity();
 	mFluid2D.enableRgb();
 	mFluid2D.enableVorticityConfinement();
+	mFluid2D.enableBuoyancy();
+
 	mFluid2D.setBoundaryType(Fluid2D::BOUNDARY_TYPE_WRAP);
+   	mFluid2D.setDensityDissipation( 0.99f );
+	mFluid2D.setRgbDissipation( 0.99f ); 
+	mFluid2D.setVelocityDissipation( 1.0f );
 	mFluid2D.setGravityDir(Vec2f(0, -1.0));
+	mFluid2D.setBuoyancyScale(5.0);
+	mFluid2D.setVorticityScale(0.5);
+
+	//mParticles.useParticleStreams(false);
+	//mParticles.setNumParticleStreams(20);
+
+	mVelScale = 3.0f * max( mFluid2D.resX(), mFluid2D.resY() );
 
 	/*
 	mParams = params::InterfaceGl( "Params", Vec2i( 300, 400 ) );
@@ -107,26 +108,10 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	mParams.addParam( "Vorticity Scale", mFluid2D.vorticityScaleAddr(), "min=0 max=1 step=0.001" );
 	*/
 
-
-	mParticles.useParticleStreams(false);
-	//mParticles.setNumParticleStreams(20);
 	mParticles.setup(Rectf(0, 0, 1024, 1024), &mFluid2D );
 
-	/*
-    Rectf bounds = Rectf(0, 0, 1024, 1024);
-	for( int n = 0; n < mParticles.numParticles(); ++n ) {
-            Vec2f P;
-        
-            //P.x = Rand::randInt(0, kNumParticleStreams) * ( bounds.x2 / kNumParticleStreams );
-           // P.y = 2;//Rand::randFloat( bounds.y1 + 5.0f, bounds.y2 - 5.0f );
-
-            P.x = Rand::randFloat( bounds.x1 + 5.0f, bounds.x2 - 5.0f );
-            P.y = Rand::randFloat( bounds.y1 + 5.0f, bounds.y2 - 5.0f );
-
-            float life = Rand::randFloat( 0.0f, 1.0f );
-            mParticles.append( Particle( P, life, mColor ) );
-	}
-	*/
+	myExecuteCount = 0;
+	mTimer.start();
 }
 FluidSimTOP::~FluidSimTOP() {}
 
@@ -191,9 +176,6 @@ void FluidSimTOP::execute(
 	// UPDATE
 
 
-	// generate some movement so we can see some particles
-	
-
 	// create a random color every frame
 	Colorf color;
 	color.r = Rand::randFloat();
@@ -201,8 +183,10 @@ void FluidSimTOP::execute(
 	color.b = Rand::randFloat();
 
 	// createa movement that will disrupt the fluid field
-	Vec2f pos = Vec2f(	(mPosition.x / (float) outputFormat->width )  * mFluid2D.resX(),
-						(mPosition.y / (float) outputFormat->height ) * mFluid2D.resY());
+	Vec2f pos = Vec2f(	(mPosition.x / (float) outputFormat->width)  * mFluid2D.resX(),
+						(mPosition.y / (float) outputFormat->height) * mFluid2D.resY());
+	
+	
 	Vec2f dv = mPosition - mPPosition;
 
 	// create fluid splat
@@ -222,6 +206,10 @@ void FluidSimTOP::execute(
 		mParticles.append( Particle( partPos, life, color ) );
 	}
 
+
+
+
+
     // create wind
     Vec2f wind_vec = flowDirection * flowSpeed;
 	float ypos = mFluid2D.resY() - 2;
@@ -233,18 +221,20 @@ void FluidSimTOP::execute(
 	mParticles.setColor( mColor );
 	mParticles.update( &mTimer );
 
+
+
 	// get fluidsim texturedata
-	float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
+	// float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
+
 
 
 	// DRAW
-	
+
 	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE );	
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
 
+	// draw particles
 	glPointSize( aPointSize );
-	glColor4f( mColor );
-
 	glBegin( GL_POINTS );
 	for( int i = 0; i < mParticles.numParticles(); ++i ) {
 		const Particle& part = mParticles.at( i );
@@ -254,20 +244,32 @@ void FluidSimTOP::execute(
 	}
 	glEnd();
 
-	/*
-	glBegin( GL_POINTS );
-	for( int i = 0; i < mParticles.numParticles(); ++i ) {
-		const Particle& part = mParticles.at( i );
-		//if( ! part.alive() )
-		//	continue;
-		float alpha = part.age() * part.invLife();
-		alpha = 1.0f; // - std::min( alpha, 1.0f );
-		alpha = std::min( alpha, 0.8f );
-		glColor4f( ColorAf( part.color(), alpha ) );
-		glVertex2f( part.pos() );
-	}
-	glEnd();
-	*/
+	// draw obstacles
+	glColor3f(mColor);
+	drawSolidCircle(mPosition, 20);
+}
+
+
+void FluidSimTOP::drawSolidCircle( const Vec2f &center, float radius, int numSegments )
+{
+        // determine the number of segments from the circumference
+        if( numSegments <= 0 ) {
+                numSegments = (int)math<double>::floor( radius * M_PI * 2 );
+        }
+        if( numSegments < 2 ) numSegments = 2;
+        GLfloat *verts = new float[(numSegments+2)*2];
+        verts[0] = center.x;
+        verts[1] = center.y;
+        for( int s = 0; s <= numSegments; s++ ) {
+                float t = s / (float)numSegments * 2.0f * 3.14159f;
+                verts[(s+1)*2+0] = center.x + math<float>::cos( t ) * radius;
+                verts[(s+1)*2+1] = center.y + math<float>::sin( t ) * radius;
+        }
+        glEnableClientState( GL_VERTEX_ARRAY );
+        glVertexPointer( 2, GL_FLOAT, 0, verts );
+        glDrawArrays( GL_TRIANGLE_FAN, 0, numSegments + 2 );
+        glDisableClientState( GL_VERTEX_ARRAY );
+        delete [] verts;
 }
 
 
