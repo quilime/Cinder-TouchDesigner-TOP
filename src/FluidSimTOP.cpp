@@ -100,6 +100,21 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	mFluid2D.enableVorticityConfinement();
 
 	mParticles.setup(Rectf(0, 0, 1024, 1024), &mFluid2D );
+
+
+    Rectf bounds = Rectf(0, 0, 1024, 1024);
+	for( int n = 0; n < mParticles.numParticles(); ++n ) {
+            Vec2f P;
+        
+            //P.x = Rand::randInt(0, kNumParticleStreams) * ( bounds.x2 / kNumParticleStreams );
+           // P.y = 2;//Rand::randFloat( bounds.y1 + 5.0f, bounds.y2 - 5.0f );
+
+            P.x = Rand::randFloat( bounds.x1 + 5.0f, bounds.x2 - 5.0f );
+            P.y = Rand::randFloat( bounds.y1 + 5.0f, bounds.y2 - 5.0f );
+
+            float life = Rand::randFloat( 0.0f, 1.0f );
+            mParticles.append( Particle( P, life, mColor ) );
+	}
 }
 FluidSimTOP::~FluidSimTOP() {}
 
@@ -148,6 +163,17 @@ void FluidSimTOP::execute(
 		mParticles.append( Particle( partPos, life, color ) );
 	}
 
+    // create some wind
+    Vec2f wind_vec =  Vec2f(0, 1.0) * 35; // 25
+    for (int i = 0; i < mFluid2D.resX(); i++) {
+            mFluid2D.addVelocity( i, 2, wind_vec );
+            //mFluid2D.addVelocity( i, mFluid2D.resY() - 2, vv );
+    }
+    for (int i = 0; i < mFluid2D.resY(); i++) {
+            //mFluid2D.addVelocity( 2,                                i, vv );
+            //mFluid2D.addVelocity( mFluid2D.resX()-2,  i, vv );
+    }
+
 	mFluid2D.step();
 	mParticles.update( &mTimer );
 
@@ -168,8 +194,8 @@ void FluidSimTOP::execute(
 	glBegin( GL_POINTS );
 	for( int i = 0; i < mParticles.numParticles(); ++i ) {
 		const Particle& part = mParticles.at( i );
-		if( ! part.alive() )
-			continue;
+		//if( ! part.alive() )
+		//	continue;
 		float alpha = part.age() * part.invLife();
 		alpha = 1.0f; // - std::min( alpha, 1.0f );
 		alpha = std::min( alpha, 0.8f );
