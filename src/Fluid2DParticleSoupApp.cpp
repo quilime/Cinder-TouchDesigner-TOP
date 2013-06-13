@@ -262,7 +262,7 @@ void Fluid2DParticleSoupApp::update()
 			double distanceSquared = dx + dy;
 			double radiusSquared = radius * radius;
 			if(distanceSquared <= radiusSquared) {
-				mFluid2D.velocityAt(x, y) = (vv * 0.25) + (mPos-mPrevPos);
+				mFluid2D.velocityAt(x, y) = (vv * 0.25) + (mPos - mPrevPos);
 			}
 		}
 	}

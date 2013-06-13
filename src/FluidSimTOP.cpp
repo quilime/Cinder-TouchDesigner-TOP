@@ -63,17 +63,16 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	//mFluid2D.setDt( 0.1f );
 	
 	mFluid2D.enableDensity();
-	mFluid2D.enableRgb();
+	//mFluid2D.enableRgb();
 	mFluid2D.enableVorticityConfinement();
-	mFluid2D.enableBuoyancy();
 
 	mFluid2D.setBoundaryType(Fluid2D::BOUNDARY_TYPE_WRAP);
    	mFluid2D.setDensityDissipation( 0.99f );
-	mFluid2D.setRgbDissipation( 0.99f ); 
+	//mFluid2D.setRgbDissipation( 0.99f ); 
 	mFluid2D.setVelocityDissipation( 1.0f );
 	mFluid2D.setGravityDir(Vec2f(0, -1.0));
-	mFluid2D.setBuoyancyScale(5.0);
-	mFluid2D.setVorticityScale(0.5);
+	//mFluid2D.setBuoyancyScale(5.0);
+	//mFluid2D.setVorticityScale(0.6);
 
 	//mParticles.useParticleStreams(false);
 	//mParticles.setNumParticleStreams(20);
@@ -172,9 +171,69 @@ void FluidSimTOP::execute(
 	flowDirection.normalize();
 	float flowSpeed = arrays->floatInputs[6].values[2];
 
+	float enableBuoyancy = arrays->floatInputs[6].values[3] > 0 ? true : false;
+	mFluid2D.enableBuoyancy(enableBuoyancy);
+
+	mFluid2D.setVorticityScale(arrays->floatInputs[7].values[0]);
+	mFluid2D.setBuoyancyScale(arrays->floatInputs[7].values[1]);
+	mFluid2D.setGravityDir(Vec2f(arrays->floatInputs[7].values[2], arrays->floatInputs[7].values[3]));
+
 
 	// UPDATE
 
+    // create wind
+    Vec2f wind_vec = flowDirection * flowSpeed;
+	float ypos = mFluid2D.resY() - 2;
+    for (int i = 0; i < mFluid2D.resX(); i++) {
+            mFluid2D.addVelocity( i, ypos, wind_vec );
+    }
+
+
+
+	// get texture position
+	Vec2f pos = Vec2f( (mPosition.x / (float) outputFormat->width)  * mFluid2D.resX(),
+					   (mPosition.y / (float) outputFormat->height) * mFluid2D.resY());
+	Vec2f ppos = Vec2f( (mPPosition.x / (float) outputFormat->width)  * mFluid2D.resX(),
+					   (mPPosition.y / (float) outputFormat->height) * mFluid2D.resY());
+	Vec2f dv = mPosition - mPPosition;
+	
+	float radius = (30.0 / (float) outputFormat->width) * mFluid2D.resX();
+	Vec2f c_center(mFluid2D.resX() / 2.0f, mFluid2D.resX() / 2.0f);
+	Vec2f cc(pos);
+
+	// get circle bounds
+	cc.x = max((double) cc.x, (double) radius);
+	cc.x = min((double) cc.x, (double) mFluid2D.resX() - radius);
+	cc.y = max((double) cc.y, (double) radius);
+	cc.y = min((double) cc.y, (double) mFluid2D.resY() - radius);
+
+	// only check pixels in circle rec bounds
+	Area ca(cc.x - radius - 2, cc.y - radius - 2,
+			cc.x + radius + 2, cc.y + radius + 2);
+	for (int32_t y = ca.getY1(); y < ca.getY2(); ++y) {
+		for (int32_t x = ca.getX1(); x < ca.getX2(); ++x) {
+			Vec2f d = Vec2f(x, y);
+			Vec2f vv = d - cc;
+			double dx = cc.x - x;
+			double dy = cc.y - y;
+			dx *= dx;
+			dy *= dy;
+			double distanceSquared = dx + dy;
+			double radiusSquared = radius * radius;
+			if(distanceSquared <= radiusSquared) {
+				mFluid2D.velocityAt(x, y) = (vv * 0.25) + dv;
+			}
+		}
+	}
+
+	// create fluid splat at position
+	mFluid2D.splatVelocity( pos.x, pos.y, dv * mVelScale );
+	mFluid2D.splatRgb( pos.x, pos.y, mRgbScale * mColor );
+	if( mFluid2D.isBuoyancyEnabled() ) {
+		mFluid2D.splatDensity( pos.x, pos.y, mDenScale );
+	}
+
+	/*
 
 	// create a random color every frame
 	Colorf color;
@@ -182,10 +241,8 @@ void FluidSimTOP::execute(
 	color.g = Rand::randFloat();
 	color.b = Rand::randFloat();
 
-	// createa movement that will disrupt the fluid field
-	Vec2f pos = Vec2f(	(mPosition.x / (float) outputFormat->width)  * mFluid2D.resX(),
-						(mPosition.y / (float) outputFormat->height) * mFluid2D.resY());
-	
+	Vec2f pos = Vec2f( (mPosition.x / (float) outputFormat->width)  * mFluid2D.resX(),
+					   (mPosition.y / (float) outputFormat->height) * mFluid2D.resY());
 	
 	Vec2f dv = mPosition - mPPosition;
 
@@ -206,16 +263,11 @@ void FluidSimTOP::execute(
 		mParticles.append( Particle( partPos, life, color ) );
 	}
 
+	*/
 
 
 
 
-    // create wind
-    Vec2f wind_vec = flowDirection * flowSpeed;
-	float ypos = mFluid2D.resY() - 2;
-    for (int i = 0; i < mFluid2D.resX(); i++) {
-            mFluid2D.addVelocity( i, ypos, wind_vec );
-    }
 
 	mFluid2D.step();
 	mParticles.setColor( mColor );
