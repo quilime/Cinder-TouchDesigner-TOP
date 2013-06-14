@@ -22,7 +22,7 @@ const float kSimDt2			= kSimDt*kSimDt;
 const float kPointSize		= 2.5f;
 const float kBorder			= kPointSize;
 const float kDampen         = 0.93f;
-const int   kMaxParticles   = 20000;
+const int   kMaxParticles   = 50000;
 
 void Particle::reset( const Vec2f& aPos, float aLife, const Colorf& aColor )
 {

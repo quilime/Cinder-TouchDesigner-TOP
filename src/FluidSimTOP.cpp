@@ -64,7 +64,7 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	mFluid2D.set( 64, 64 );
 
 	// from particlesystem
-	//mFluid2D.setDt( 0.1f );
+	mFluid2D.setDt( 0.1f );
 	
 	mFluid2D.enableDensity();
 	//mFluid2D.enableRgb();
@@ -75,8 +75,8 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	//mFluid2D.setRgbDissipation( 0.99f ); 
 	mFluid2D.setVelocityDissipation( 1.0f );
 	mFluid2D.setGravityDir(Vec2f(0, -1.0));
-	//mFluid2D.setBuoyancyScale(5.0);
-	//mFluid2D.setVorticityScale(0.6);
+	mFluid2D.setBuoyancyScale(5.0);
+	mFluid2D.setVorticityScale(0.6);
 
 	mParticles.useParticleStreams(false);
 
@@ -188,7 +188,7 @@ void FluidSimTOP::execute(
 	flowDirection.normalize();
 	float flowSpeed = arrays->floatInputs[6].values[2];
 
-	bool enableBuoyancy = arrays->floatInputs[6].values[3] > 0 ? 1 : 0;
+	bool enableBuoyancy = arrays->floatInputs[6].values[3] > 0 ? true : false;
 	mFluid2D.enableBuoyancy(enableBuoyancy);
 
 	mFluid2D.setVorticityScale(arrays->floatInputs[7].values[0]);
