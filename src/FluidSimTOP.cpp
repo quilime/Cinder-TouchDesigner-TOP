@@ -180,7 +180,7 @@ void FluidSimTOP::execute(
 		Vec2f& p = mObstacles.at(i);
 
 		p - mPosition;
-		p.rotate( atan2( direction.y, direction.x ) - (3.141264f / 2.0f) );
+		p.rotate( atan2( direction.y, direction.x ) - (3.1415926f / 2.0f) );
 		p += mPosition;
 
 		Vec2f& pp = mObstaclesPP.at(i);
