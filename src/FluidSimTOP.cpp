@@ -200,6 +200,7 @@ void FluidSimTOP::execute(
 
 	// UPDATE
 
+
     // create wind
     Vec2f wind_vec = flowDirection * flowSpeed;
 	float ypos = mFluid2D.resY() - 2;
@@ -208,11 +209,11 @@ void FluidSimTOP::execute(
     }
 
 
-
+	// set obstacles
 	for( int i = 0; i < mNumObstacles; ++i ) {
 
-		Vec2f& p  = mObstacles.at( i );
-		Vec2f& pp = mObstaclesPP.at( i );
+		Vec2f& p  = mObstacles.at(i);
+		Vec2f& pp = mObstaclesPP.at(i);
 
 		// convert position to texturespace
 		Vec2f pos  = Vec2f((p.x  / (float) outputFormat->width)  * mFluid2D.resX(),
@@ -245,7 +246,7 @@ void FluidSimTOP::execute(
 				double distanceSquared = dx + dy;
 				double radiusSquared = radius * radius;
 				if(distanceSquared <= radiusSquared) {
-					mFluid2D.velocityAt(x, y) = (vv * obstacleVelocityScale + dv) * mVelScale;
+					mFluid2D.velocityAt(x, y) = (vv * obstacleVelocityScale) + dv;
 				}
 			}
 		}
@@ -313,6 +314,7 @@ void FluidSimTOP::execute(
 
 	// DRAW
 
+
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
 
@@ -334,7 +336,8 @@ void FluidSimTOP::execute(
 			drawSolidCircle(mObstacles.at( i ), obstacleRadius);
 		}
 	}
-	// draw center
+
+	// draw origin
 	drawSolidCircle(mPosition, 10);
 }
 
