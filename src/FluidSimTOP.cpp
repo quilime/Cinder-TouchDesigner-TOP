@@ -61,55 +61,17 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	mRgbScale = 50;
 	mDenScale = 50;
 	
-	mFluid2D.set( 64, 64 );
-
-	// from particlesystem
+	mFluid2D.set( 128, 128 );
 	mFluid2D.setDt( 0.1f );
 	
 	mFluid2D.enableDensity();
-	//mFluid2D.enableRgb();
 	mFluid2D.enableVorticityConfinement();
-
 	mFluid2D.setBoundaryType(Fluid2D::BOUNDARY_TYPE_WRAP);
    	mFluid2D.setDensityDissipation( 0.99f );
-	//mFluid2D.setRgbDissipation( 0.99f ); 
 	mFluid2D.setVelocityDissipation( 1.0f );
-	mFluid2D.setGravityDir(Vec2f(0, -1.0));
-	mFluid2D.setBuoyancyScale(5.0);
-	mFluid2D.setVorticityScale(0.6);
 
 	mParticles.useParticleStreams(false);
-
 	mVelScale = 3.0f * max( mFluid2D.resX(), mFluid2D.resY() );
-
-	/*
-	mParams = params::InterfaceGl( "Params", Vec2i( 300, 400 ) );
-	mParams.addParam( "Stam Step", mFluid2D.stamStepAddr() );
-	mParams.addSeparator();
-	mParams.addParam( "Velocity Input Scale", &mVelScale, "min=0 max=10000 step=1" );
-	mParams.addParam( "Density Input Scale", &mDenScale, "min=0 max=1000 step=1" );
-	mParams.addParam( "Rgb Input Scale", &mRgbScale, "min=0 max=1000 step=1" );
-	mParams.addSeparator();
-	mParams.addParam( "Velocity Dissipation", mFluid2D.velocityDissipationAddr(), "min=0.0001 max=1 step=0.0001" );
-	mParams.addParam( "Density Dissipation", mFluid2D.densityDissipationAddr(), "min=0.0001 max=1 step=0.0001" );
-	mParams.addParam( "Rgb Dissipation", mFluid2D.rgbDissipationAddr(), "min=0.0001 max=1 step=0.0001" );   
-	mParams.addSeparator();
-	mParams.addParam( "Velocity Viscosity", mFluid2D.velocityViscosityAddr(), "min=0.000001 max=10 step=0.000001" );
-	mParams.addParam( "Density Viscosity", mFluid2D.densityViscosityAddr(), "min=0.000001 max=10 step=0.000001" );
-	mParams.addParam( "Rgb Viscosity", mFluid2D.rgbViscosityAddr(), "min=0.000001 max=10 step=0.000001" );
-	mParams.addSeparator();
-	mParams.addSeparator();
-	mParams.addParam( "Vorticity Confinement", mFluid2D.enableVorticityConfinementAddr() );
-	mParams.addSeparator();
-	std::vector<std::string> boundaries;
-	boundaries.push_back( "None" ); boundaries.push_back( "Wall" ); boundaries.push_back( "Wrap" );
-	mParams.addParam( "Boundary Type", boundaries, mFluid2D.boundaryTypeAddr() );
-	mParams.addSeparator();
-	mParams.addParam( "Enable Buoyancy", mFluid2D.enableBuoyancyAddr() );
-	mParams.addParam( "Buoyancy Scale", mFluid2D.buoyancyScaleAddr(), "min=0 max=100 step=0.001" );
-	mParams.addParam( "Vorticity Scale", mFluid2D.vorticityScaleAddr(), "min=0 max=1 step=0.001" );
-	*/
-
 	mParticles.setup(Rectf(0, 0, 1024, 1024), &mFluid2D );
 
 	myExecuteCount = 0;
@@ -198,6 +160,9 @@ void FluidSimTOP::execute(
 	float obstacleRadius = arrays->floatInputs[8].values[0];
 	float obstacleVelocityScale = arrays->floatInputs[8].values[1];
 
+
+
+
 	// UPDATE
 
 
@@ -264,56 +229,11 @@ void FluidSimTOP::execute(
 		}
 	}
 
-
-
-
-
-
-
-	/*
-
-	// create a random color every frame
-	Colorf color;
-	color.r = Rand::randFloat();
-	color.g = Rand::randFloat();
-	color.b = Rand::randFloat();
-
-	Vec2f pos = Vec2f( (mPosition.x / (float) outputFormat->width)  * mFluid2D.resX(),
-					   (mPosition.y / (float) outputFormat->height) * mFluid2D.resY());
-	
-	Vec2f dv = mPosition - mPPosition;
-
-	// create fluid splat
-	mFluid2D.splatVelocity( pos.x, pos.y, dv * mVelScale );
-	mFluid2D.splatRgb( pos.x, pos.y, mRgbScale * color );
-	if( mFluid2D.isBuoyancyEnabled() ) {
-		mFluid2D.splatDensity( pos.x, pos.y, mDenScale );
-	}
-
-	// generate some particles at the position
-	float s = 10;
-	for( int i = 0; i < 5; ++i ) {
-		Vec2f partPos = mPosition + Vec2f( 
-			Rand::randFloat( -s, s ), 
-			Rand::randFloat( -s, s ));
-		float life = Rand::randFloat( 3.0f, 6.0f );
-		mParticles.append( Particle( partPos, life, color ) );
-	}
-
-	*/
-
-
-
-
-
 	mFluid2D.step();
 	mParticles.setColor( mColor );
 	mParticles.update( &mTimer );
 
 
-
-	// get fluidsim texturedata
-	// float* data = const_cast<float*>( (float*) mFluid2D.rgb().data() );
 
 
 
