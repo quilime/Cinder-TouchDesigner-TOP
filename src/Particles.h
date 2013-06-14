@@ -101,7 +101,7 @@ public:
 			mColor(1.0, 1.0, 1.0)
 	{}
 
-	int				numParticles() const { return (int)mParticles.size(); }
+	int				numParticles() const { return (int) mParticles.size(); }
 	Particle&		at( int n ) { return *( mParticles.begin() + (size_t)n ); }
 	const Particle&	at( int n ) const { return *( mParticles.begin() + (size_t)n ); }
 	void			append( const Particle& aParticle );
@@ -110,7 +110,9 @@ public:
 	void			setColor( const Colorf& aColor ) { mColor = aColor; }
 	void			setDirection( Vec2f& dir ) { mDir = dir; } 
 	void			setNumParticleStreams( int n ) { mNumParticleStreams = n; } 
+	void			resize( int numParticles );
 	void			useParticleStreams( bool v = true ) { mUseParticleStreams = v; } 
+	Vec2f			newParticleVec();
 
 	void			setup( const Rectf& aBounds, Fluid2D* aFluid );
 	void			update(ci::Timer* timer );
@@ -123,8 +125,7 @@ private:
 	Colorf					mColor;
 	Vec2f					mDir;
 
-
-	float					mNumParticleStreams;
+	int						mNumParticleStreams;
 	bool					mUseParticleStreams;
 	std::vector<Particle>	mParticles;
 	

@@ -32,18 +32,7 @@ void Particle::reset( const Vec2f& aPos, float aLife, const Colorf& aColor )
 	mAge = 0;
 	mColor = aColor;
 }
-/*
-void Particle::update( float dt )
-{
-	Vec2f vel = mPos - mPrevPos;
-	mPos += vel*kSimDt;
-	mPos += mAccel*kSimDt2;
-	mAccel *= kDampen;
-	mPrevPos = mPos;
-	
-	mAge += dt;
-}
-*/
+
 void Particle::update( float simDt, float ageDt )
 {
 	Vec2f vel = mPos - mPrevPos;
@@ -58,25 +47,35 @@ void ParticleSystem::setup( const Rectf& aBounds, Fluid2D* aFluid )
 {
 	mBounds = aBounds;
 	mFluid = aFluid;
-	
-	//mParticles.resize( kMaxParticles );
-	
 	Rectf bounds = aBounds;
 	for( int n = 0; n < kMaxParticles; ++n ) {
-		Vec2f P;
-        
-		// from the top
-		if (mUseParticleStreams) {
-			P.x = Rand::randInt(0, mNumParticleStreams) * ( bounds.x2 / mNumParticleStreams );
-			P.y = bounds.getHeight() - 2;
-		} else {
-			P.x = Rand::randFloat( bounds.x1 + 5.0f, bounds.x2 - 5.0f );
-			P.y = Rand::randFloat( bounds.y1 + 5.0f, bounds.y2 - 5.0f );
-		}
-
-		float life = Rand::randFloat( 0.0f, 1.0f );
-		mParticles.push_back( Particle( P, life, mColor ) );
+		mParticles.push_back( Particle( newParticleVec(), Rand::randFloat( 0.0f, 1.0f ), mColor ) );
 	}
+}
+
+void ParticleSystem::resize(int aNumParticles)
+{
+	if (aNumParticles > (int) mParticles.size()) {
+		for( int n = mParticles.size(); n < aNumParticles; ++n ) {
+			mParticles.push_back( Particle( newParticleVec(), Rand::randFloat( 0.0f, 1.0f ), mColor ) );
+		}
+	} else {
+		mParticles.resize(aNumParticles);
+	}
+	
+}
+
+Vec2f ParticleSystem::newParticleVec()
+{
+	Vec2f P;
+	if (mUseParticleStreams) {
+		P.x = Rand::randInt(0, mNumParticleStreams) * ( mBounds.x2 / mNumParticleStreams );
+		P.y = mBounds.getHeight() - 2;
+	} else {
+		P.x = Rand::randFloat( mBounds.x1 + 5.0f, mBounds.x2 - 5.0f );
+		P.y = Rand::randFloat( mBounds.y1 + 5.0f, mBounds.y2 - 5.0f );
+	}
+	return P;
 }
 
 void ParticleSystem::append( const Particle& aParticle )
@@ -114,16 +113,7 @@ void ParticleSystem::update(Timer* timer )
 	for( int i = 0; i < numParticles(); ++i ) {
 		Particle& part = mParticles.at( i );
 		if( part.pos().x < minX || part.pos().y < minY || part.pos().x >= maxX || part.pos().y >= maxY ) {
-			Vec2f P;
-			if (mUseParticleStreams) {
-				P.x = Rand::randInt(0, mNumParticleStreams) * ( bounds.x2 / mNumParticleStreams );
-				P.y = bounds.getHeight() - 2;
-			} else {
-				P.x = Rand::randFloat( bounds.x1 + 5.0f, bounds.x2 - 5.0f );
-				P.y = Rand::randFloat( bounds.y1 + 5.0f, bounds.y2 - 5.0f );
-			}
-			float life = Rand::randFloat( 2.0f, 3.0f );
-			part.reset( P, life, mColor );
+			part.reset( newParticleVec(), Rand::randFloat( 0.0f, 1.0f ), mColor );
 		}
 
 		float x = part.pos().x * dx + 2.0f;
@@ -133,24 +123,7 @@ void ParticleSystem::update(Timer* timer )
 		part.addForce( vel );
 
 		part.update( mFluid->dt(), dt );
-		//part.update( dt );
 	}
-
-	/*
-	for( int i = 0; i < numParticles(); ++i ) {
-		Particle& part = mParticles.at( i );
-		if( part.pos().x < minX || part.pos().y < minY || part.pos().x >= maxX || part.pos().y >= maxY ) {
-			part.kill();
-		}
-		else {
-			float x = part.pos().x*dx + 2.0f;
-			float y = part.pos().y*dy + 2.0f;
-			Vec2f vel = mFluid->velocity().bilinearSampleChecked( x, y, Vec2f( 0.0f, 0.0f ) );
-			part.addForce( vel );
-			part.update( dt );
-		}
-	}
-	*/
 }
 
 void ParticleSystem::draw()

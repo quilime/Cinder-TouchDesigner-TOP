@@ -95,6 +95,7 @@ void ParticleSoup::update(Timer* timer )
 
 		Vec2f vel = mFluid->velocity().bilinearSampleChecked( x, y, Vec2f( 0.0f, 0.0f ) );
 		part.addForce( vel );
+		//part.addForce( mDir );
 
 		part.update( mFluid->dt(), dt );
 	}

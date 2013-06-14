@@ -39,6 +39,7 @@ class FluidSimTOP : public TOP_CPlusPlusBase {
 		cinderfx::Fluid2D			mFluid2D;
 		ci::gl::Texture				mTex;
 		ParticleSystem				mParticles;
+		int							mMaxParticles;
 		ci::Colorf					mColor;
 
 		Vec2f						mPosition;
@@ -60,6 +61,7 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 
 	mRgbScale = 50;
 	mDenScale = 50;
+	mMaxParticles = 5000;
 	
 	mFluid2D.set( 128, 128 );
 	mFluid2D.setDt( 0.1f );
@@ -160,6 +162,11 @@ void FluidSimTOP::execute(
 	float obstacleRadius = arrays->floatInputs[8].values[0];
 	float obstacleVelocityScale = arrays->floatInputs[8].values[1];
 
+	if (mMaxParticles != (int) arrays->floatInputs[9].values[0]) {
+		mMaxParticles = (int) arrays->floatInputs[9].values[0];
+		mParticles.resize(mMaxParticles);
+	}
+
 
 
 
@@ -180,7 +187,7 @@ void FluidSimTOP::execute(
 		Vec2f& p = mObstacles.at(i);
 
 		p - mPosition;
-		p.rotate( atan2( direction.y, direction.x ) - (3.1415926f / 2.0f) );
+		p.rotate( atan2( direction.y, direction.x ) - (3.14159f / 2.0f) );
 		p += mPosition;
 
 		Vec2f& pp = mObstaclesPP.at(i);
