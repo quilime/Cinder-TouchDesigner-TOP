@@ -41,9 +41,13 @@ class FluidSimTOP : public TOP_CPlusPlusBase {
 		ParticleSystem				mParticles;
 		ci::Colorf					mColor;
 
-
 		Vec2f						mPosition;
 		Vec2f						mPPosition;
+
+		int							mNumObstacles;
+
+		std::vector<Vec2f>			mObstacles;
+		std::vector<Vec2f>			mObstaclesPP;
 };
 
 
@@ -74,8 +78,7 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	//mFluid2D.setBuoyancyScale(5.0);
 	//mFluid2D.setVorticityScale(0.6);
 
-	//mParticles.useParticleStreams(false);
-	//mParticles.setNumParticleStreams(20);
+	mParticles.useParticleStreams(false);
 
 	mVelScale = 3.0f * max( mFluid2D.resX(), mFluid2D.resY() );
 
@@ -111,6 +114,13 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 
 	myExecuteCount = 0;
 	mTimer.start();
+
+	// create obstacle positions
+	mNumObstacles = 6;
+	for( int i = 0; i < mNumObstacles; ++i ) {
+		mObstacles.push_back(Vec2f());
+		mObstaclesPP.push_back(Vec2f());
+	}
 }
 FluidSimTOP::~FluidSimTOP() {}
 
@@ -137,31 +147,38 @@ void FluidSimTOP::execute(
 			arrays->floatInputs[1].values[1],
 			arrays->floatInputs[1].values[2]);
 
+	bool showObstacles = arrays->floatInputs[1].values[3] > 0 ? true : false;
+
     mPPosition = mPosition;
 	mPosition.set(
 			arrays->floatInputs[2].values[0],
 			arrays->floatInputs[2].values[1]);
-	Vec2f orientation(
+	Vec2f direction(
 			arrays->floatInputs[2].values[2],
 			arrays->floatInputs[2].values[3]);
-	float directon = orientation.x;
 
-	Vec2f obstacle1(
+	mObstaclesPP.at(0).set(mObstacles.at(0));
+	mObstacles.at(0).set(
 			arrays->floatInputs[3].values[0],
 			arrays->floatInputs[3].values[1]);
-	Vec2f obstacle2(
+	mObstaclesPP.at(1).set(mObstacles.at(1));
+	mObstacles.at(1).set(
 			arrays->floatInputs[3].values[2],
 			arrays->floatInputs[3].values[3]);
-	Vec2f obstacle3(
+	mObstaclesPP.at(2).set(mObstacles.at(2));
+	mObstacles.at(2).set(
 			arrays->floatInputs[4].values[0],
 			arrays->floatInputs[4].values[1]);
-	Vec2f obstacle4(
+	mObstaclesPP.at(3).set(mObstacles.at(3));
+	mObstacles.at(3).set(
 			arrays->floatInputs[4].values[2],
 			arrays->floatInputs[4].values[3]);
-	Vec2f obstacle5(
+	mObstaclesPP.at(4).set(mObstacles.at(4));
+	mObstacles.at(4).set(
 			arrays->floatInputs[5].values[0],
 			arrays->floatInputs[5].values[1]);
-	Vec2f obstacle6(
+	mObstaclesPP.at(5).set(mObstacles.at(5));
+	mObstacles.at(5).set(
 			arrays->floatInputs[5].values[2],
 			arrays->floatInputs[5].values[3]);
 
@@ -171,13 +188,15 @@ void FluidSimTOP::execute(
 	flowDirection.normalize();
 	float flowSpeed = arrays->floatInputs[6].values[2];
 
-	float enableBuoyancy = arrays->floatInputs[6].values[3] > 0 ? true : false;
+	bool enableBuoyancy = arrays->floatInputs[6].values[3] > 0 ? 1 : 0;
 	mFluid2D.enableBuoyancy(enableBuoyancy);
 
 	mFluid2D.setVorticityScale(arrays->floatInputs[7].values[0]);
 	mFluid2D.setBuoyancyScale(arrays->floatInputs[7].values[1]);
 	mFluid2D.setGravityDir(Vec2f(arrays->floatInputs[7].values[2], arrays->floatInputs[7].values[3]));
 
+	float obstacleRadius = arrays->floatInputs[8].values[0];
+	float obstacleVelocityScale = arrays->floatInputs[8].values[1];
 
 	// UPDATE
 
@@ -190,48 +209,60 @@ void FluidSimTOP::execute(
 
 
 
-	// get texture position
-	Vec2f pos = Vec2f( (mPosition.x / (float) outputFormat->width)  * mFluid2D.resX(),
-					   (mPosition.y / (float) outputFormat->height) * mFluid2D.resY());
-	Vec2f ppos = Vec2f( (mPPosition.x / (float) outputFormat->width)  * mFluid2D.resX(),
-					   (mPPosition.y / (float) outputFormat->height) * mFluid2D.resY());
-	Vec2f dv = mPosition - mPPosition;
+	for( int i = 0; i < mNumObstacles; ++i ) {
+
+		Vec2f& p  = mObstacles.at( i );
+		Vec2f& pp = mObstaclesPP.at( i );
+
+		// convert position to texturespace
+		Vec2f pos  = Vec2f((p.x  / (float) outputFormat->width)  * mFluid2D.resX(),
+						   (p.y  / (float) outputFormat->height) * mFluid2D.resY());
+		Vec2f ppos = Vec2f((pp.x / (float) outputFormat->width)  * mFluid2D.resX(),
+						   (pp.y / (float) outputFormat->height) * mFluid2D.resY());
+		Vec2f dv = p - pp;
 	
-	float radius = (30.0 / (float) outputFormat->width) * mFluid2D.resX();
-	Vec2f c_center(mFluid2D.resX() / 2.0f, mFluid2D.resX() / 2.0f);
-	Vec2f cc(pos);
+		float radius = (obstacleRadius / (float) outputFormat->width) * mFluid2D.resX();
+		Vec2f c_center(mFluid2D.resX() / 2.0f, mFluid2D.resX() / 2.0f);
+		Vec2f cc(pos);
 
-	// get circle bounds
-	cc.x = max((double) cc.x, (double) radius);
-	cc.x = min((double) cc.x, (double) mFluid2D.resX() - radius);
-	cc.y = max((double) cc.y, (double) radius);
-	cc.y = min((double) cc.y, (double) mFluid2D.resY() - radius);
+		// get circle bounds
+		cc.x = max((double) cc.x, (double) radius);
+		cc.x = min((double) cc.x, (double) mFluid2D.resX() - radius);
+		cc.y = max((double) cc.y, (double) radius);
+		cc.y = min((double) cc.y, (double) mFluid2D.resY() - radius);
 
-	// only check pixels in circle rec bounds
-	Area ca(cc.x - radius - 2, cc.y - radius - 2,
-			cc.x + radius + 2, cc.y + radius + 2);
-	for (int32_t y = ca.getY1(); y < ca.getY2(); ++y) {
-		for (int32_t x = ca.getX1(); x < ca.getX2(); ++x) {
-			Vec2f d = Vec2f(x, y);
-			Vec2f vv = d - cc;
-			double dx = cc.x - x;
-			double dy = cc.y - y;
-			dx *= dx;
-			dy *= dy;
-			double distanceSquared = dx + dy;
-			double radiusSquared = radius * radius;
-			if(distanceSquared <= radiusSquared) {
-				mFluid2D.velocityAt(x, y) = (vv * 0.25) + dv;
+		// only check pixels in circle rec bounds
+		Area ca(cc.x - radius - 2, cc.y - radius - 2,
+				cc.x + radius + 2, cc.y + radius + 2);
+		for (int32_t y = ca.getY1(); y < ca.getY2(); ++y) {
+			for (int32_t x = ca.getX1(); x < ca.getX2(); ++x) {
+				Vec2f d = Vec2f(x, y);
+				Vec2f vv = d - cc;
+				double dx = cc.x - x;
+				double dy = cc.y - y;
+				dx *= dx;
+				dy *= dy;
+				double distanceSquared = dx + dy;
+				double radiusSquared = radius * radius;
+				if(distanceSquared <= radiusSquared) {
+					mFluid2D.velocityAt(x, y) = (vv * obstacleVelocityScale + dv) * mVelScale;
+				}
 			}
+		}
+
+		// create fluid splat at position
+		mFluid2D.splatVelocity( pos.x, pos.y, dv * mVelScale );
+		mFluid2D.splatRgb( pos.x, pos.y, mRgbScale * mColor );
+		if( mFluid2D.isBuoyancyEnabled() ) {
+			mFluid2D.splatDensity( pos.x, pos.y, mDenScale );
 		}
 	}
 
-	// create fluid splat at position
-	mFluid2D.splatVelocity( pos.x, pos.y, dv * mVelScale );
-	mFluid2D.splatRgb( pos.x, pos.y, mRgbScale * mColor );
-	if( mFluid2D.isBuoyancyEnabled() ) {
-		mFluid2D.splatDensity( pos.x, pos.y, mDenScale );
-	}
+
+
+
+
+
 
 	/*
 
@@ -297,8 +328,14 @@ void FluidSimTOP::execute(
 	glEnd();
 
 	// draw obstacles
-	glColor3f(mColor);
-	drawSolidCircle(mPosition, 20);
+	if (showObstacles) {
+		glColor3f(mColor);
+		for( int i = 0; i < mNumObstacles; ++i ) {
+			drawSolidCircle(mObstacles.at( i ), obstacleRadius);
+		}
+	}
+	// draw center
+	drawSolidCircle(mPosition, 10);
 }
 
 
