@@ -212,7 +212,12 @@ void FluidSimTOP::execute(
 	// set obstacles
 	for( int i = 0; i < mNumObstacles; ++i ) {
 
-		Vec2f& p  = mObstacles.at(i);
+		Vec2f& p = mObstacles.at(i);
+
+		p - mPosition;
+		p.rotate( atan2( direction.y, direction.x ) - (3.141264f / 2.0f) );
+		p += mPosition;
+
 		Vec2f& pp = mObstaclesPP.at(i);
 
 		// convert position to texturespace
@@ -338,7 +343,7 @@ void FluidSimTOP::execute(
 	}
 
 	// draw origin
-	drawSolidCircle(mPosition, 10);
+	//drawSolidCircle(mPosition, 10);
 }
 
 
