@@ -14,7 +14,7 @@
     <ProjectGuid>{095FF399-F4A7-43EF-BB02-25E44CE05DF9}</ProjectGuid>
     <RootNamespace>FluidSimTOP</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>FluidSimTop</ProjectName>
+    <ProjectName>FluidSimTOP</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
