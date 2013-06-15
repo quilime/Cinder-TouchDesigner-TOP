@@ -102,9 +102,9 @@ void FluidSimTOP::execute(
 
 	mVelScale = arrays->floatInputs[0].values[1] * max( mFluid2D.resX(), mFluid2D.resY() );
 
-	float useParticleStreams = arrays->floatInputs[0].values[2] > 0 ? true : false;
+	bool useParticleStreams = arrays->floatInputs[0].values[2] > 0 ? true : false;
 	mParticles.useParticleStreams(useParticleStreams);
-	mParticles.setNumParticleStreams(arrays->floatInputs[0].values[3]);
+	mParticles.setNumParticleStreams((int) arrays->floatInputs[0].values[3]);
 
 	mColor = ColorA(
 			arrays->floatInputs[1].values[0],
@@ -174,10 +174,10 @@ void FluidSimTOP::execute(
 
 
     // create wind
-    Vec2f wind_vec = flowDirection * flowSpeed;
-	float ypos = mFluid2D.resY() - 2;
+    Vec2f windVec = flowDirection * flowSpeed;
+	int ypos = mFluid2D.resY() - 2;
     for (int i = 0; i < mFluid2D.resX(); i++) {
-            mFluid2D.addVelocity( i, ypos, wind_vec );
+            mFluid2D.addVelocity( i, ypos, windVec );
     }
 
 
@@ -204,17 +204,17 @@ void FluidSimTOP::execute(
 		Vec2f cc(pos);
 
 		// get circle bounds
-		cc.x = max((double) cc.x, (double) radius);
-		cc.x = min((double) cc.x, (double) mFluid2D.resX() - radius);
-		cc.y = max((double) cc.y, (double) radius);
-		cc.y = min((double) cc.y, (double) mFluid2D.resY() - radius);
+		cc.x = (float) max((double) cc.x, (double) radius);
+		cc.x = (float) min((double) cc.x, (double) mFluid2D.resX() - radius);
+		cc.y = (float) max((double) cc.y, (double) radius);
+		cc.y = (float) min((double) cc.y, (double) mFluid2D.resY() - radius);
 
 		// only check pixels in circle rec bounds
-		Area ca(cc.x - radius - 2, cc.y - radius - 2,
-				cc.x + radius + 2, cc.y + radius + 2);
+		Area ca((int32_t) (cc.x - radius - 2.0f), (int32_t) (cc.y - radius - 2.0f),
+				(int32_t) (cc.x + radius + 2.0f), (int32_t) (cc.y + radius + 2.0f));
 		for (int32_t y = ca.getY1(); y < ca.getY2(); ++y) {
 			for (int32_t x = ca.getX1(); x < ca.getX2(); ++x) {
-				Vec2f d = Vec2f(x, y);
+				Vec2f d = Vec2f((float) x, (float) y);
 				Vec2f vv = d - cc;
 				double dx = cc.x - x;
 				double dy = cc.y - y;
