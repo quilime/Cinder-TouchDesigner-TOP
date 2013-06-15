@@ -36,10 +36,10 @@ void Particle::reset( const Vec2f& aPos, float aLife, const Colorf& aColor )
 void Particle::update( float simDt, float ageDt )
 {
 	Vec2f vel = mPos - mPrevPos;
+	mPrevPos = mPos;
 	mPos += vel * simDt;
 	mPos += mAccel * simDt * simDt;
 	mAccel *= kDampen;
-	mPrevPos = mPos;
 	mAge += ageDt;
 }
 

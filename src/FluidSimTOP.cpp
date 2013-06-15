@@ -39,6 +39,7 @@ class FluidSimTOP : public TOP_CPlusPlusBase {
 		cinderfx::Fluid2D			mFluid2D;
 		ci::gl::Texture				mTex;
 		ParticleSystem				mParticles;
+		Rectf						mParticleBounds;
 		int							mMaxParticles;
 		ci::Colorf					mColor;
 
@@ -46,6 +47,7 @@ class FluidSimTOP : public TOP_CPlusPlusBase {
 		Vec2f						mPPosition;
 
 		int							mNumObstacles;
+		bool						mDrawParticleVectors;
 
 		std::vector<Vec2f>			mObstacles;
 		std::vector<Vec2f>			mObstaclesPP;
@@ -63,19 +65,16 @@ FluidSimTOP::FluidSimTOP(const TOP_NodeInfo *info) : myNodeInfo(info) {
 	mDenScale = 50;
 	mMaxParticles = 5000;
 	
-	mFluid2D.set( 128, 128 );
+	mFluid2D.set( 192, 192 );
 	mFluid2D.setDt( 0.1f );
-	
 	mFluid2D.enableDensity();
 	mFluid2D.enableVorticityConfinement();
 	mFluid2D.setBoundaryType(Fluid2D::BOUNDARY_TYPE_WRAP);
-   	mFluid2D.setDensityDissipation( 0.99f );
-	mFluid2D.setVelocityDissipation( 1.0f );
 
 	mParticles.useParticleStreams(false);
 	mVelScale = 3.0f * max( mFluid2D.resX(), mFluid2D.resY() );
-	mParticles.setup(Rectf(0, 0, 1024, 1024), &mFluid2D );
-
+	mParticleBounds.set(0, 0, 1024, 1024);
+	mParticles.setup(mParticleBounds, &mFluid2D );
 	myExecuteCount = 0;
 	mTimer.start();
 
@@ -162,11 +161,23 @@ void FluidSimTOP::execute(
 	float obstacleRadius = arrays->floatInputs[8].values[0];
 	float obstacleVelocityScale = arrays->floatInputs[8].values[1];
 
+   	mFluid2D.setDensityDissipation( arrays->floatInputs[8].values[2] );
+	mFluid2D.setVelocityDissipation( arrays->floatInputs[8].values[3] );
+
 	if (mMaxParticles != (int) arrays->floatInputs[9].values[0]) {
 		mMaxParticles = (int) arrays->floatInputs[9].values[0];
 		mParticles.resize(mMaxParticles);
 	}
 
+	mDrawParticleVectors = arrays->floatInputs[9].values[2] > 0 ? true : false;
+
+	if ((int) mParticleBounds.getWidth() != (int) outputFormat->width ||
+		(int) mParticleBounds.getWidth() != (int) outputFormat->height){
+		mParticleBounds.set(0, 0, outputFormat->width, outputFormat->height);
+		mParticles.setBounds(mParticleBounds);
+	}
+
+	float aVectorLength = arrays->floatInputs[9].values[1];
 
 
 
@@ -186,7 +197,6 @@ void FluidSimTOP::execute(
 
 		Vec2f& p = mObstacles.at(i);
 
-		p - mPosition;
 		p.rotate( atan2( direction.y, direction.x ) - (3.14159f / 2.0f) );
 		p += mPosition;
 
@@ -245,13 +255,12 @@ void FluidSimTOP::execute(
 
 
 	// DRAW
-
-
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
 
 	// draw particles
 	glPointSize( aPointSize );
+	glLineWidth( aPointSize );
 	glBegin( GL_POINTS );
 	for( int i = 0; i < mParticles.numParticles(); ++i ) {
 		const Particle& part = mParticles.at( i );
@@ -260,6 +269,34 @@ void FluidSimTOP::execute(
 		glVertex2f( part.pos() );
 	}
 	glEnd();
+
+	// draw particle vectors
+	if (mDrawParticleVectors) {
+		glBegin( GL_LINES );
+		for( int i = 0; i < mParticles.numParticles(); ++i ) {
+			const Particle& part = mParticles.at( i );
+			float alpha = std::min( part.age() / 1.0f, 0.75f );
+			glColor4f( ColorAf( part.color(), alpha ) );
+			
+			// arrow body
+			glVertex2f( part.pos() );
+			Vec2f dir = part.pos() - part.prevPos();
+			dir.normalize();
+			glVertex2f( part.pos() + (dir *= -aVectorLength) );
+
+			// arrowhead
+			dir.rotate( 135.0 * 3.14159f / 180.0f );
+			dir.normalize();
+			glVertex2f( part.pos() );
+			glVertex2f( part.pos() + (dir *= -(aVectorLength/2.0)) );
+			
+			dir.rotate( -90.0 * 3.14159f / 180.0f );
+			dir.normalize();
+			glVertex2f( part.pos() );
+			glVertex2f( part.pos() + (dir *= -(aVectorLength/2.0)) );
+		}
+		glEnd();
+	}
 
 	// draw obstacles
 	if (showObstacles) {

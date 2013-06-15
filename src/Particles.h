@@ -49,6 +49,10 @@ public:
 
 	Vec2f&			pos() { return mPos; }
 	const Vec2f&	pos() const { return mPos; }
+	Vec2f&			prevPos() { return mPrevPos; }
+	const Vec2f&	prevPos() const { return mPrevPos; }
+	Vec2f&			getAccel() { return mAccel; }
+	const	Vec2f&	getAccel() const { return mAccel; }
 	void			setPos( const Vec2f& aPos ) { mPos = aPos; mPrevPos = aPos; }
 	void			addForce( const Vec2f& aForce ) { mAccel += aForce; }
 	void			clearForce() { mAccel = Vec2f( 0, 0 ); }
@@ -110,6 +114,7 @@ public:
 	void			setColor( const Colorf& aColor ) { mColor = aColor; }
 	void			setDirection( Vec2f& dir ) { mDir = dir; } 
 	void			setNumParticleStreams( int n ) { mNumParticleStreams = n; } 
+	void			setBounds( Rectf aBounds ) { mBounds = aBounds; } 
 	void			resize( int numParticles );
 	void			useParticleStreams( bool v = true ) { mUseParticleStreams = v; } 
 	Vec2f			newParticleVec();
@@ -127,6 +132,7 @@ private:
 
 	int						mNumParticleStreams;
 	bool					mUseParticleStreams;
+	bool					mDrawParticleVectors;
 	std::vector<Particle>	mParticles;
 	
 	size_t					mPartPos;
