@@ -11,6 +11,8 @@ Gabriel Dunne <gdunne@quilime.com>
 Obscura Digital
 June 2013
 
---
+How To:
 
-Open touch/FluidSimTOP.toe in TouchDesigner v77 for demo.
+	1. Download FluidSimTOP.dll from https://bitbucket.org/obscura/od.installations.americascup2013.fluidsimtop/downloads
+	2. Save DLL to vc10/Release/FLuidSimTOP.dll (you may have to create the Release folder)
+	3. Open touch/FluidSimTOP.toe in TouchDesigner v77
