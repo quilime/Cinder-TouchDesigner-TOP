@@ -1,9 +1,12 @@
 # ignore
 touch/FluidSimTOP.*.toe
-vc10/Release
-vc10/Debug
+vc10/Release/*
+vc10/Debug/*
 vc10/*.suo
 vc10/*.sdf
 vc10/*.opensdf
 vc10/*.vcxproj.user
 vc10/ipch
+
+# except
+!vc10/Release/FluidSimTOP.dll
