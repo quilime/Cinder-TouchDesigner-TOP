@@ -13,7 +13,6 @@ June 2013
 
 How To:
 
-	1. Download FluidSimTOP.dll from
-		https://bitbucket.org/obscura/od.installations.americascup2013.fluidsimtop/downloads
-	2. Save DLL to vc10/Release/FLuidSimTOP.dll (you may have to create the Release folder)
-	3. Open touch/FluidSimTOP.toe in TouchDesigner v77
+1. Download FluidSimTOP.dll from the Downloads section in the BitBucket repo.
+2. Save DLL to vc10/Release/FLuidSimTOP.dll (you may have to create the folder)
+3. Open touch/FluidSimTOP.toe in TouchDesigner v77
