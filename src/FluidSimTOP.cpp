@@ -1,3 +1,7 @@
+/*
+Author: Gabriel Dunne <gdunne@quilime.com>
+*/
+
 #include "cinder/Cinder.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/GlslProg.h"
